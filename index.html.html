@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S6 Course Choices</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+        .mode-selector { display: flex; gap: 15px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+        .mode-btn {
+            padding: 15px 30px; border: none; border-radius: 10px; font-size: 1rem;
+            font-weight: 600; cursor: pointer; transition: all 0.3s;
+            background: rgba(255,255,255,0.2); color: white;
+        }
+        .mode-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+        .mode-btn.active { background: white; color: #1e3a5f; }
+        .card {
+            background: white; border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); overflow: hidden;
+        }
+        .card-header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            color: white; padding: 25px 30px;
+        }
+        .card-header h1 { font-size: 1.6rem; margin-bottom: 8px; }
+        .card-header p { opacity: 0.9; font-size: 0.95rem; }
+        .card-body { padding: 30px; }
+        .progress-bar {
+            display: flex; justify-content: center; align-items: center; gap: 6px;
+            padding: 20px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; flex-wrap: wrap;
+        }
+        .progress-step {
+            width: 32px; height: 32px; border-radius: 50%; background: #e9ecef;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 0.8rem; color: #666; transition: all 0.3s;
+        }
+        .progress-step.active { background: #2d5a87; color: white; transform: scale(1.1); }
+        .progress-step.completed { background: #28a745; color: white; }
+        .progress-connector { width: 20px; height: 3px; background: #e9ecef; border-radius: 2px; }
+        .progress-connector.completed { background: #28a745; }
+        .step { display: none; animation: fadeIn 0.3s ease; }
+        .step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .step-title { font-size: 1.3rem; color: #1e3a5f; margin-bottom: 8px; }
+        .step-desc { color: #666; margin-bottom: 25px; }
+        .form-group { margin-bottom: 24px; }
+        .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 8px; }
+        .form-group .hint { font-size: 0.85rem; color: #666; margin-bottom: 10px; }
+        .form-group .optional { font-weight: normal; color: #999; font-size: 0.85rem; }
+        input[type="text"], select, textarea {
+            width: 100%; padding: 14px 16px; border: 2px solid #e9ecef;
+            border-radius: 10px; font-size: 1rem; font-family: inherit; transition: all 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: #2d5a87; box-shadow: 0 0 0 3px rgba(45,90,135,0.1);
+        }
+        textarea { min-height: 100px; resize: vertical; }
+        .option-group { display: flex; flex-direction: column; gap: 10px; }
+        .option-group.horizontal { flex-direction: row; flex-wrap: wrap; }
+        .option-group.horizontal .option-item { flex: 1; min-width: 150px; }
+        .option-item {
+            display: flex; align-items: flex-start; gap: 12px; padding: 16px;
+            background: #f8f9fa; border: 2px solid transparent; border-radius: 10px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .option-item:hover { background: #e9ecef; }
+        .option-item.selected { background: #e3f2fd; border-color: #2d5a87; }
+        .option-item input { margin-top: 3px; width: 18px; height: 18px; }
+        .option-content { flex: 1; }
+        .option-title { font-weight: 600; color: #333; }
+        .option-desc { font-size: 0.85rem; color: #666; margin-top: 4px; }
+        .info-box {
+            background: #e8f4fd; border: 1px solid #b8daff; border-radius: 10px;
+            padding: 16px 20px; margin-bottom: 20px;
+        }
+        .info-box.warning { background: #fff3cd; border-color: #ffc107; }
+        .info-box.success { background: #d4edda; border-color: #28a745; }
+        .info-box.error { background: #f8d7da; border-color: #dc3545; }
+        .info-box h5 { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; color: #004085; }
+        .info-box.warning h5 { color: #856404; }
+        .info-box.success h5 { color: #155724; }
+        .info-box.error h5 { color: #721c24; }
+        .info-box p, .info-box ol, .info-box ul { font-size: 0.9rem; color: #333; margin: 0; }
+        .info-box ol, .info-box ul { margin-left: 20px; margin-top: 10px; }
+        .info-box li { margin-bottom: 5px; }
+        .recs-container {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;
+            min-height: 50px; padding: 15px; background: #f8f9fa;
+            border-radius: 8px; border: 2px dashed #dee2e6;
+        }
+        .rec-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #d4edda; color: #155724; padding: 8px 14px;
+            border-radius: 20px; font-size: 0.9rem; font-weight: 500;
+        }
+        .rec-chip button {
+            background: #155724; color: white; border: none; width: 20px; height: 20px;
+            border-radius: 50%; cursor: pointer; font-size: 0.9rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .rec-chip button:hover { background: #0d3d16; }
+        .add-rec-row { display: flex; gap: 10px; }
+        .add-rec-row input { flex: 1; }
+        .add-rec-row button {
+            padding: 14px 24px; background: #28a745; color: white; border: none;
+            border-radius: 10px; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+        .add-rec-row button:hover { background: #218838; }
+        
+        /* Pathway Panel */
+        .pathway-panel {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%);
+            border-radius: 12px; padding: 20px; margin-bottom: 25px; color: white;
+            position: sticky; top: 10px; z-index: 100;
+        }
+        .pathway-status { display: flex; gap: 15px; flex-wrap: wrap; align-items: stretch; }
+        .period-counter {
+            background: rgba(255,255,255,0.15); padding: 15px 20px; border-radius: 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-width: 70px;
+        }
+        .period-counter .number { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+        .period-counter .label { font-size: 0.65rem; opacity: 0.8; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pathway-indicator {
+            flex: 1; background: rgba(255,255,255,0.15); padding: 15px 20px; border-radius: 10px;
+            min-width: 200px;
+        }
+        .pathway-indicator.valid { background: rgba(40, 167, 69, 0.5); }
+        .pathway-indicator.invalid { background: rgba(220, 53, 69, 0.5); }
+        .pathway-indicator.partial { background: rgba(255, 193, 7, 0.5); }
+        .pathway-indicator .status { font-weight: 700; font-size: 1rem; margin-bottom: 5px; }
+        .pathway-indicator .details { font-size: 0.8rem; opacity: 0.9; }
+        .subject-counts {
+            display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;
+        }
+        .subject-count {
+            background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 12px;
+            font-size: 0.75rem;
+        }
+        
+        /* Choices Panel */
+        .choices-panel {
+            background: #e8f4fd; border: 2px solid #b8daff;
+            border-radius: 12px; padding: 20px; margin-bottom: 25px;
+        }
+        .choices-panel h4 {
+            display: flex; justify-content: space-between; align-items: center;
+            color: #004085; margin-bottom: 15px;
+        }
+        .choices-list { display: flex; flex-direction: column; gap: 8px; }
+        .choice-item {
+            display: flex; align-items: center; gap: 12px; background: white;
+            padding: 12px 16px; border-radius: 8px; border: 1px solid #b8daff;
+        }
+        .choice-item .order {
+            width: 28px; height: 28px; background: #004085; color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; flex-shrink: 0;
+        }
+        .choice-item .name { flex: 1; font-weight: 500; }
+        .choice-item .level-badge {
+            font-size: 0.7rem; padding: 3px 10px; border-radius: 12px;
+            font-weight: 600;
+        }
+        .choice-item .level-badge.small { background: #e9ecef; color: #666; }
+        .choice-item .level-badge.large { background: #d4edda; color: #155724; }
+        .choice-item .level-badge.ah { background: #cce5ff; color: #004085; }
+        .choice-item .remove {
+            width: 26px; height: 26px; background: #dc3545; color: white;
+            border: none; border-radius: 50%; cursor: pointer; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .choice-item .remove:hover { background: #c82333; }
+        .empty-choices { color: #666; font-style: italic; text-align: center; padding: 20px; }
+
+        /* Subject Areas */
+        .subject-area { margin-bottom: 15px; border: 1px solid #e9ecef; border-radius: 10px; overflow: hidden; }
+        .area-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 18px; background: #f8f9fa; cursor: pointer;
+            font-weight: 600; color: #1e3a5f; transition: background 0.2s;
+        }
+        .area-header:hover { background: #e9ecef; }
+        .area-header .toggle { font-size: 0.8rem; transition: transform 0.2s; }
+        .area-header.collapsed .toggle { transform: rotate(-90deg); }
+        .area-subjects {
+            padding: 15px; display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px; background: white;
+        }
+        .area-subjects.hidden { display: none; }
+        .subject-btn {
+            display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+            background: white; border: 2px solid #e9ecef; border-radius: 8px;
+            cursor: pointer; transition: all 0.2s; text-align: left; font-size: 0.85rem; width: 100%;
+        }
+        .subject-btn:hover:not(.disabled) { border-color: #2d5a87; background: #f0f7ff; }
+        .subject-btn.selected { background: #2d5a87; border-color: #2d5a87; color: white; }
+        .subject-btn.disabled { opacity: 0.4; cursor: not-allowed; background: #f8f9fa; }
+        .subject-btn .check {
+            width: 22px; height: 22px; border-radius: 50%; border: 2px solid #ccc;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; flex-shrink: 0; transition: all 0.2s;
+        }
+        .subject-btn.selected .check { background: white; border-color: white; color: #2d5a87; }
+        .subject-btn .info { flex: 1; min-width: 0; }
+        .subject-btn .subject-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .subject-btn .subject-level { font-size: 0.7rem; opacity: 0.7; }
+        .subject-btn .periods-tag {
+            font-size: 0.65rem; padding: 2px 6px; border-radius: 6px;
+            background: #e9ecef; color: #666; flex-shrink: 0;
+        }
+        .subject-btn.selected .periods-tag { background: rgba(255,255,255,0.3); color: white; }
+        .subject-btn .partnership-tag {
+            font-size: 0.6rem; padding: 2px 6px; border-radius: 6px;
+            background: #fff3cd; color: #856404; flex-shrink: 0;
+        }
+        .subject-btn.selected .partnership-tag { background: rgba(255,255,255,0.3); color: white; }
+
+        /* Pathway Help */
+        .pathway-help { margin-top: 20px; background: #f8f9fa; border-radius: 10px; }
+        .pathway-help summary {
+            cursor: pointer; font-weight: 600; color: #2d5a87; padding: 15px;
+            list-style: none;
+        }
+        .pathway-help summary::-webkit-details-marker { display: none; }
+        .pathway-help summary::before { content: "▶ "; font-size: 0.8rem; }
+        .pathway-help[open] summary::before { content: "▼ "; }
+        .pathway-help-content { padding: 0 15px 15px; }
+        .pathway-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        .pathway-table th, .pathway-table td { padding: 10px 8px; border: 1px solid #dee2e6; text-align: center; }
+        .pathway-table th { background: #e9ecef; font-weight: 600; }
+        .pathway-table tr:hover { background: #f0f7ff; }
+        .pathway-table .current { background: #d4edda !important; }
+
+        .btn-row {
+            display: flex; justify-content: space-between; margin-top: 30px;
+            padding-top: 20px; border-top: 1px solid #e9ecef; gap: 15px;
+        }
+        .btn {
+            padding: 14px 28px; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-back { background: #e9ecef; color: #333; }
+        .btn-back:hover { background: #dee2e6; }
+        .btn-next { background: linear-gradient(135deg, #2d5a87 0%, #1e3a5f 100%); color: white; }
+        .btn-next:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+        .btn-submit { background: linear-gradient(135deg, #28a745 0%, #218838 100%); color: white; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        
+        .summary-block { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .summary-block h4 { color: #1e3a5f; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e9ecef; }
+        .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+        .summary-item { background: white; padding: 12px 15px; border-radius: 8px; }
+        .summary-item label { font-size: 0.8rem; color: #666; display: block; margin-bottom: 4px; }
+        .summary-item .value { font-weight: 600; color: #333; }
+        .summary-list { list-style: none; }
+        .summary-list li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #e9ecef; }
+        .summary-list li:last-child { border-bottom: none; }
+        .summary-list .num {
+            width: 30px; height: 30px; background: #2d5a87; color: white;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; font-weight: 700;
+        }
+        .alert {
+            display: flex; gap: 15px; padding: 16px 20px; border-radius: 10px;
+            margin-bottom: 15px; align-items: flex-start;
+        }
+        .alert-success { background: #d4edda; border: 1px solid #28a745; color: #155724; }
+        .alert-warning { background: #fff3cd; border: 1px solid #ffc107; color: #856404; }
+        .alert-error { background: #f8d7da; border: 1px solid #dc3545; color: #721c24; }
+        .alert-info { background: #d1ecf1; border: 1px solid #17a2b8; color: #0c5460; }
+        .alert .icon { font-size: 1.3rem; flex-shrink: 0; }
+        .alert .content { flex: 1; }
+        .confirmation { text-align: center; padding: 40px 20px; }
+        .confirmation .icon { font-size: 5rem; margin-bottom: 20px; }
+        .confirmation h2 { color: #1e3a5f; margin-bottom: 15px; }
+        .confirmation > p { color: #666; margin-bottom: 20px; font-size: 1.05rem; }
+        .code-box {
+            background: #e8f4fd; border: 2px dashed #2d5a87; border-radius: 12px;
+            padding: 25px; margin: 25px auto; max-width: 600px;
+        }
+        .code-box label { font-size: 0.9rem; color: #666; display: block; margin-bottom: 12px; font-weight: 600; }
+        .code-box .code {
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 0.7rem;
+            background: white; padding: 15px; border-radius: 8px; word-break: break-all;
+            border: 1px solid #b8daff; max-height: 80px; overflow-y: auto; text-align: left;
+        }
+        .code-box .copy-btn {
+            margin-top: 15px; padding: 12px 28px; background: #2d5a87; color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600;
+            font-size: 1rem; transition: all 0.2s;
+        }
+        .code-box .copy-btn:hover { background: #1e3a5f; }
+        .email-instructions { text-align: left; max-width: 500px; margin: 25px auto; }
+        .email-instructions ol { margin: 15px 0 0 20px; line-height: 2; }
+        .email-instructions .email-address {
+            color: #1e3a5f; font-weight: 700; background: #e3f2fd;
+            padding: 2px 8px; border-radius: 4px;
+        }
+        
+        /* Early leaver styles */
+        .early-leaver-message {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .early-leaver-message .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        .early-leaver-message h2 {
+            color: #1e3a5f;
+            margin-bottom: 15px;
+        }
+        .early-leaver-message p {
+            color: #666;
+            margin-bottom: 15px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+        .early-leaver-message .next-steps {
+            text-align: left;
+            max-width: 500px;
+            margin: 25px auto;
+        }
+        .early-leaver-message .next-steps h4 {
+            color: #1e3a5f;
+            margin-bottom: 15px;
+        }
+        .early-leaver-message .next-steps ul {
+            margin-left: 20px;
+            line-height: 2;
+        }
+        
+        /* Admin styles */
+        .admin-section { margin-bottom: 30px; }
+        .admin-section h3 { color: #1e3a5f; margin-bottom: 15px; }
+        .paste-area {
+            width: 100%; min-height: 120px; padding: 15px; border: 2px solid #e9ecef;
+            border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.85rem; margin-bottom: 15px;
+        }
+        .paste-area:focus { outline: none; border-color: #2d5a87; }
+        .submissions-list { display: flex; flex-direction: column; gap: 15px; }
+        .submission-card { background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 12px; overflow: hidden; }
+        .submission-card.green { border-left: 5px solid #28a745; }
+        .submission-card.amber { border-left: 5px solid #ffc107; }
+        .submission-card.red { border-left: 5px solid #dc3545; }
+        .submission-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px 20px; background: white; cursor: pointer; transition: background 0.2s;
+        }
+        .submission-header:hover { background: #f8f9fa; }
+        .submission-header .info { flex: 1; }
+        .submission-header .name { font-weight: 600; font-size: 1.1rem; color: #1e3a5f; }
+        .submission-header .meta { font-size: 0.85rem; color: #666; margin-top: 4px; }
+        .submission-header .status { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .status-green { background: #d4edda; color: #155724; }
+        .status-amber { background: #fff3cd; color: #856404; }
+        .status-red { background: #f8d7da; color: #721c24; }
+        .submission-body { padding: 20px; display: none; border-top: 1px solid #e9ecef; }
+        .submission-body.expanded { display: block; }
+        .submission-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .submission-item { background: white; padding: 12px; border-radius: 8px; }
+        .submission-item label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 4px; }
+        .submission-item .value { font-weight: 600; color: #333; }
+        .submission-item .value.needs-action { color: #dc3545; }
+        .submission-item .value.good { color: #28a745; }
+        .comparison-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
+        .comparison-table th { text-align: left; padding: 10px 12px; background: #e9ecef; font-weight: 600; }
+        .comparison-table td { padding: 10px 12px; border-bottom: 1px solid #e9ecef; }
+        .comparison-table tr:hover { background: #f8f9fa; }
+        .match-yes { color: #28a745; font-weight: 600; }
+        .match-no { color: #999; }
+        .follow-up-section { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 15px; margin-top: 15px; }
+        .follow-up-section h5 { color: #856404; margin-bottom: 10px; }
+        .follow-up-section ul { margin-left: 20px; color: #856404; }
+        .hidden { display: none !important; }
+        
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .card-header { padding: 20px; }
+            .card-header h1 { font-size: 1.3rem; }
+            .card-body { padding: 20px; }
+            .area-subjects { grid-template-columns: 1fr; }
+            .btn-row { flex-direction: column; }
+            .btn { width: 100%; }
+            .summary-grid { grid-template-columns: 1fr; }
+            .mode-selector { flex-direction: column; }
+            .mode-btn { width: 100%; }
+            .option-group.horizontal { flex-direction: column; }
+            .option-group.horizontal .option-item { min-width: 100%; }
+            .pathway-status { flex-direction: column; }
+            .pathway-panel { position: relative; top: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mode-selector">
+            <button class="mode-btn active" onclick="setMode('student')">📝 Student Form</button>
+            <button class="mode-btn" onclick="setMode('admin')">👩‍🏫 Staff Review</button>
+        </div>
+
+        <!-- STUDENT MODE -->
+        <div id="studentMode" class="card">
+            <div class="card-header">
+                <h1>📚 S6 Course Choices 2025-26</h1>
+                <p>Complete this form to submit your subject preferences for S6</p>
+            </div>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-step active" data-step="1">1</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="2">2</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="3">3</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="4">4</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="5">5</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="6">6</div>
+                <div class="progress-connector"></div>
+                <div class="progress-step" data-step="7">7</div>
+            </div>
+
+            <div class="card-body">
+                <!-- Step 1: About You -->
+                <div class="step active" data-step="1">
+                    <h2 class="step-title">About You</h2>
+                    <p class="step-desc">Let's start with some basic information.</p>
+
+                    <div class="form-group">
+                        <label>Scottish Candidate Number (SCN) <span class="optional">- if you know it</span></label>
+                        <input type="text" id="scn" placeholder="e.g., 123456789" maxlength="9">
+                        <p class="hint">This is the 9-digit number on your SQA documents. Don't worry if you can't remember it.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="forename" placeholder="Enter your first name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Surname *</label>
+                        <input type="text" id="surname" placeholder="Enter your surname">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Registration Class *</label>
+                        <input type="text" id="regClass" placeholder="e.g., 5A1">
+                    </div>
+
+                    <div class="btn-row">
+                        <div></div>
+                        <button class="btn btn-next" onclick="nextStep()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Your Plans -->
+                <div class="step" data-step="2">
+                    <h2 class="step-title">Your Plans After School</h2>
+                    <p class="step-desc">Tell us about your intended destination after S6.</p>
+
+                    <div class="form-group">
+                        <label>When do you plan to leave school? *</label>
+                        <div class="option-group horizontal">
+                            <div class="option-item" onclick="selectOption(this, 'leavingDate', 'End of S6')">
+                                <input type="radio" name="leavingDate" value="End of S6">
+                                <div class="option-content">
+                                    <div class="option-title">End of S6</div>
+                                    <div class="option-desc">June 2026</div>
+                                </div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'leavingDate', 'End of S5')">
+                                <input type="radio" name="leavingDate" value="End of S5">
+                                <div class="option-content">
+                                    <div class="option-title">End of S5</div>
+                                    <div class="option-desc">June 2025</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Early leaver message - shown when End of S5 selected -->
+                    <div id="earlyLeaverSection" style="display: none;">
+                        <div class="early-leaver-message">
+                            <div class="icon">👋</div>
+                            <h2>Thanks for letting us know!</h2>
+                            <p>Since you're planning to leave at the end of S5, you don't need to complete the S6 course choices form.</p>
+                            
+                            <div class="info-box warning">
+                                <h5>⚠️ Are you sure?</h5>
+                                <p>If you're not 100% certain you'll be leaving, it might be worth completing this form anyway - you can always change your mind later, but having choices on record gives you options.</p>
+                            </div>
+
+                            <div class="next-steps">
+                                <h4>📋 What happens next?</h4>
+                                <ul>
+                                    <li>Make sure you've applied for your next destination (university, college, apprenticeship, or job)</li>
+                                    <li>Speak to the Careers Advisor if you need help with applications</li>
+                                    <li>Let your guidance teacher know your plans</li>
+                                    <li>If your plans change, come back and complete this form</li>
+                                </ul>
+                            </div>
+
+                            <div class="form-group" style="margin-top: 30px;">
+                                <label>Where are you planning to go after S5?</label>
+                                <select id="earlyLeaverDest">
+                                    <option value="">-- Select --</option>
+                                    <option value="University">University</option>
+                                    <option value="College">College</option>
+                                    <option value="Apprenticeship">Apprenticeship</option>
+                                    <option value="Employment">Employment</option>
+                                    <option value="Gap Year">Gap Year</option>
+                                    <option value="Unsure">I'm not sure yet</option>
+                                </select>
+                            </div>
+
+                            <div class="btn-row" style="justify-content: center; border: none; padding-top: 10px;">
+                                <button class="btn btn-submit" onclick="submitEarlyLeaver()">✓ Confirm I'm leaving after S5</button>
+                            </div>
+                            
+                            <p style="margin-top: 20px; font-size: 0.9rem; color: #666;">
+                                Changed your mind? <a href="#" onclick="cancelEarlyLeaver(); return false;" style="color: #2d5a87;">Click here to continue with S6 choices</a>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Rest of Step 2 - shown when End of S6 selected -->
+                    <div id="s6PlanSection">
+                        <div class="form-group">
+                            <label>Where do you plan to go after S6? *</label>
+                            <div class="option-group" id="destTypeOptions">
+                                <div class="option-item" onclick="selectOption(this, 'destType', 'University')">
+                                    <input type="radio" name="destType" value="University">
+                                    <div class="option-content">
+                                        <div class="option-title">University</div>
+                                        <div class="option-desc">4-year degree programme</div>
+                                    </div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'destType', 'College')">
+                                    <input type="radio" name="destType" value="College">
+                                    <div class="option-content">
+                                        <div class="option-title">College</div>
+                                        <div class="option-desc">HNC, HND, or other college courses</div>
+                                    </div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'destType', 'Apprenticeship')">
+                                    <input type="radio" name="destType" value="Apprenticeship">
+                                    <div class="option-content">
+                                        <div class="option-title">Modern/Graduate Apprenticeship</div>
+                                        <div class="option-desc">Work-based learning with qualifications</div>
+                                    </div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'destType', 'Employment')">
+                                    <input type="radio" name="destType" value="Employment">
+                                    <div class="option-content">
+                                        <div class="option-title">Employment</div>
+                                        <div class="option-desc">Going straight into work</div>
+                                    </div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'destType', 'Unsure')">
+                                    <input type="radio" name="destType" value="Unsure">
+                                    <div class="option-content">
+                                        <div class="option-title">I'm not sure yet</div>
+                                        <div class="option-desc">Still deciding - that's okay!</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- University course question -->
+                        <div class="form-group" id="uniCourseQuestion" style="display:none;">
+                            <label>What course are you hoping to study? *</label>
+                            <input type="text" id="uniCourse" placeholder="e.g., Medicine, Computer Science, Law, Psychology...">
+                            <p class="hint">Be as specific as you can - this helps us check your subject choices are suitable.</p>
+                        </div>
+
+                        <!-- College course question -->
+                        <div class="form-group" id="collegeCourseQuestion" style="display:none;">
+                            <label>What course are you hoping to study? *</label>
+                            <input type="text" id="collegeCourse" placeholder="e.g., HNC Social Sciences, HND Computing, NC Beauty Therapy...">
+                            <p class="hint">Include the level if you know it (NC, HNC, HND).</p>
+                            
+                            <div class="info-box warning" style="margin-top: 15px;">
+                                <h5>🎓 College Applications</h5>
+                                <p><strong>College applications are open now!</strong> Have you applied yet?</p>
+                            </div>
+                            <div class="option-group horizontal" style="margin-top: 10px;">
+                                <div class="option-item" onclick="selectOption(this, 'collegeApplied', 'Yes')">
+                                    <input type="radio" name="collegeApplied" value="Yes">
+                                    <div class="option-content"><div class="option-title">Yes, I've applied</div></div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'collegeApplied', 'No')">
+                                    <input type="radio" name="collegeApplied" value="No">
+                                    <div class="option-content"><div class="option-title">Not yet</div></div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'collegeApplied', 'NotSure')">
+                                    <input type="radio" name="collegeApplied" value="NotSure">
+                                    <div class="option-content"><div class="option-title">Not sure how</div></div>
+                                </div>
+                            </div>
+                            <div id="collegeHelp" class="info-box" style="display:none; margin-top:15px;">
+                                <h5>📋 How to Apply to College</h5>
+                                <p>Apply through the college website directly, or visit <strong>www.applytouni.com</strong> for Edinburgh College. Speak to Mr Scobie or the Careers Advisor if you need help.</p>
+                            </div>
+                        </div>
+
+                        <!-- Apprenticeship questions -->
+                        <div class="form-group" id="apprenticeshipQuestion" style="display:none;">
+                            <label>What type of apprenticeship are you interested in?</label>
+                            <input type="text" id="apprenticeshipType" placeholder="e.g., Engineering, IT, Business Admin, Construction...">
+                            
+                            <div class="info-box" style="margin-top: 15px;">
+                                <h5>🔧 Apprenticeship Planning</h5>
+                                <p>Apprenticeships require you to apply directly to employers. Let us know where you're at:</p>
+                            </div>
+                            <label style="margin-top:15px;">Do you know how to find and apply for apprenticeships?</label>
+                            <div class="option-group horizontal">
+                                <div class="option-item" onclick="selectOption(this, 'apprenticeKnows', 'Yes')">
+                                    <input type="radio" name="apprenticeKnows" value="Yes">
+                                    <div class="option-content"><div class="option-title">Yes</div></div>
+                                </div>
+                                <div class="option-item" onclick="selectOption(this, 'apprenticeKnows', 'No')">
+                                    <input type="radio" name="apprenticeKnows" value="No">
+                                    <div class="option-content"><div class="option-title">No / Not sure</div></div>
+                                </div>
+                            </div>
+                            <div id="apprenticeHelp" class="info-box" style="display:none; margin-top:15px;">
+                                <h5>📋 Finding Apprenticeships</h5>
+                                <ul>
+                                    <li><strong>apprenticeships.scot</strong> - Main Scottish apprenticeship website</li>
+                                    <li><strong>Company websites</strong> - Many employers advertise directly</li>
+                                    <li><strong>Entry requirements</strong> - Usually need N5 English and Maths minimum</li>
+                                </ul>
+                                <p style="margin-top:10px;">The Careers Advisor can help you search and apply - book an appointment!</p>
+                            </div>
+                        </div>
+
+                        <!-- Employment question -->
+                        <div class="form-group" id="employmentQuestion" style="display:none;">
+                            <label>What type of work are you hoping to go into? <span class="optional">- optional</span></label>
+                            <input type="text" id="employmentType" placeholder="e.g., Retail, Office work, Hospitality...">
+                        </div>
+
+                        <div class="form-group">
+                            <label>What general area interests you? *</label>
+                            <p class="hint">This helps us understand your career direction</p>
+                            <select id="destArea">
+                                <option value="">-- Select an area --</option>
+                                <option value="Healthcare">Healthcare (Medicine, Nursing, Pharmacy, etc.)</option>
+                                <option value="Engineering">Engineering (all types)</option>
+                                <option value="Computing and ICT">Computing and ICT</option>
+                                <option value="Science and Maths">Science, Maths and Statistics</option>
+                                <option value="Law">Law / Legal Services</option>
+                                <option value="Business and Finance">Business, Finance and Accounting</option>
+                                <option value="Education">Education / Teaching</option>
+                                <option value="Sport and Leisure">Sport and Leisure</option>
+                                <option value="Art and Design">Art, Design and Architecture</option>
+                                <option value="Performing Arts">Performing Arts and Media</option>
+                                <option value="Languages">Languages / Translation</option>
+                                <option value="Social Sciences">Social Sciences / Psychology</option>
+                                <option value="Social Work">Social Work / Care Services</option>
+                                <option value="Veterinary">Veterinary / Animals / Environment</option>
+                                <option value="Uniformed Services">Police / Armed Forces / Emergency Services</option>
+                                <option value="Hospitality">Hospitality / Tourism / Events</option>
+                                <option value="Hair and Beauty">Hairdressing and Beauty</option>
+                                <option value="Construction">Construction / Trades</option>
+                                <option value="Other">Other</option>
+                                <option value="Unsure">I'm not sure yet</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="otherAreaGroup" style="display:none;">
+                            <label>Please specify:</label>
+                            <input type="text" id="otherArea" placeholder="What area interests you?">
+                        </div>
+
+                        <div class="btn-row">
+                            <button class="btn btn-back" onclick="prevStep()">← Back</button>
+                            <button class="btn btn-next" onclick="nextStep()">Next →</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Support & Guidance -->
+                <div class="step" data-step="3">
+                    <h2 class="step-title">Support & Guidance</h2>
+                    <p class="step-desc">Help us understand what support you might need.</p>
+
+                    <div class="form-group">
+                        <label>Have you discussed your S6 choices at home with a parent/carer? *</label>
+                        <div class="option-group horizontal">
+                            <div class="option-item" onclick="selectOption(this, 'discussedHome', 'Yes')">
+                                <input type="radio" name="discussedHome" value="Yes">
+                                <div class="option-content"><div class="option-title">Yes</div></div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'discussedHome', 'No')">
+                                <input type="radio" name="discussedHome" value="No">
+                                <div class="option-content"><div class="option-title">Not yet</div></div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'discussedHome', 'NA')">
+                                <input type="radio" name="discussedHome" value="NA">
+                                <div class="option-content"><div class="option-title">N/A</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>When did you last meet with the Careers Advisor?</label>
+                        <div class="option-group">
+                            <div class="option-item" onclick="selectOption(this, 'careersVisit', 'This year')">
+                                <input type="radio" name="careersVisit" value="This year">
+                                <div class="option-content"><div class="option-title">This school year (S5)</div></div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'careersVisit', 'Last year')">
+                                <input type="radio" name="careersVisit" value="Last year">
+                                <div class="option-content"><div class="option-title">Last year (S4)</div></div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'careersVisit', 'Never')">
+                                <input type="radio" name="careersVisit" value="Never">
+                                <div class="option-content"><div class="option-title">I've never met with them</div></div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'careersVisit', 'CantRemember')">
+                                <input type="radio" name="careersVisit" value="CantRemember">
+                                <div class="option-content"><div class="option-title">I can't remember</div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Would you like to speak to Mr Scobie before your choices are finalised?</label>
+                        <div class="info-box" style="margin-bottom: 15px;">
+                            <h5>ℹ️ About this option</h5>
+                            <p>Mr Scobie will review all submissions to check that choices are <strong>possible based on teacher recommendations</strong> and <strong>suitable for your intended pathway</strong>.</p>
+                            <p style="margin-top:8px;">If you'd like to discuss your options beforehand, or if you have any questions or concerns, select "Yes" below.</p>
+                        </div>
+                        <div class="option-group horizontal">
+                            <div class="option-item" onclick="selectOption(this, 'wantsMeeting', 'Yes')">
+                                <input type="radio" name="wantsMeeting" value="Yes">
+                                <div class="option-content">
+                                    <div class="option-title">Yes please</div>
+                                    <div class="option-desc">I'd like to discuss my choices</div>
+                                </div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'wantsMeeting', 'No')">
+                                <input type="radio" name="wantsMeeting" value="No">
+                                <div class="option-content">
+                                    <div class="option-title">No thanks</div>
+                                    <div class="option-desc">I'm confident in my choices</div>
+                                </div>
+                            </div>
+                            <div class="option-item" onclick="selectOption(this, 'wantsMeeting', 'IfNeeded')">
+                                <input type="radio" name="wantsMeeting" value="IfNeeded">
+                                <div class="option-content">
+                                    <div class="option-title">Only if there's an issue</div>
+                                    <div class="option-desc">Contact me if needed</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-back" onclick="prevStep()">← Back</button>
+                        <button class="btn btn-next" onclick="nextStep()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Teacher Recommendations -->
+                <div class="step" data-step="4">
+                    <h2 class="step-title">Teacher Recommendations</h2>
+                    <p class="step-desc">Tell us which subjects your teachers have recommended for you in S6.</p>
+
+                    <div class="info-box">
+                        <h5>💬 Has a teacher recommended you for their subject?</h5>
+                        <p>During S5, your subject teachers may have spoken to you about continuing their subject next year. For example, they might have said <em>"I'd recommend you for Higher Chemistry"</em> or <em>"You should consider AH English"</em>.</p>
+                        <p style="margin-top: 10px;">Add any subjects that teachers have <strong>verbally recommended</strong> you for below.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Subjects teachers have recommended for you</label>
+                        <p class="hint">Type each recommendation and click Add (e.g., "AH English", "H Chemistry")</p>
+                        
+                        <div class="recs-container" id="recsContainer">
+                            <span class="empty-msg" style="color:#999; font-style:italic;">No recommendations added yet</span>
+                        </div>
+                        
+                        <div class="add-rec-row">
+                            <input type="text" id="newRec" placeholder="e.g., AH English, H Chemistry...">
+                            <button onclick="addRec()">+ Add</button>
+                        </div>
+                    </div>
+
+                    <div class="info-box warning">
+                        <h5>❓ No recommendations yet?</h5>
+                        <p>If no teachers have spoken to you about S6 yet, that's okay - you can leave this section blank. However, adding any recommendations you've received helps us check your choices are suitable.</p>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-back" onclick="prevStep()">← Back</button>
+                        <button class="btn btn-next" onclick="nextStep()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 5: Subject Choices -->
+                <div class="step" data-step="5">
+                    <h2 class="step-title">Your Subject Choices</h2>
+                    <p class="step-desc">Select your subjects. Your combination must fit one of the valid pathways.</p>
+
+                    <div class="pathway-panel">
+                        <div class="pathway-status">
+                            <div class="period-counter">
+                                <div class="number" id="smallCount">0</div>
+                                <div class="label">N5/L5/L6</div>
+                            </div>
+                            <div class="period-counter">
+                                <div class="number" id="largeCount">0</div>
+                                <div class="label">H/AH</div>
+                            </div>
+                            <div class="pathway-indicator" id="pathwayIndicator">
+                                <div class="status">Select your subjects</div>
+                                <div class="details">Choose a valid combination from the pathways below</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="choices-panel">
+                        <h4>Your Choices (in preference order)</h4>
+                        <div class="choices-list" id="choicesList">
+                            <div class="empty-choices">Click subjects below to add them</div>
+                        </div>
+                    </div>
+
+                    <details class="pathway-help">
+                        <summary>View valid pathway combinations</summary>
+                        <div class="pathway-help-content">
+                            <table class="pathway-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pathway</th>
+                                        <th>N5/L5/L6 (4 periods)</th>
+                                        <th>H/AH (6 periods)</th>
+                                        <th>Total Subjects</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-pathway="1">
+                                        <td><strong>1</strong></td>
+                                        <td>6</td>
+                                        <td>0</td>
+                                        <td>6</td>
+                                        <td>All National 5 level</td>
+                                    </tr>
+                                    <tr data-pathway="2">
+                                        <td><strong>2</strong></td>
+                                        <td>4</td>
+                                        <td>1</td>
+                                        <td>5</td>
+                                        <td>Mostly N5 + one Higher</td>
+                                    </tr>
+                                    <tr data-pathway="3">
+                                        <td><strong>3</strong></td>
+                                        <td>3</td>
+                                        <td>2</td>
+                                        <td>5</td>
+                                        <td>Mixed N5 and Higher</td>
+                                    </tr>
+                                    <tr data-pathway="4">
+                                        <td><strong>4</strong></td>
+                                        <td>1</td>
+                                        <td>3</td>
+                                        <td>4</td>
+                                        <td>1 N5 + 3 Higher/AH</td>
+                                    </tr>
+                                    <tr data-pathway="5">
+                                        <td><strong>5</strong></td>
+                                        <td>0</td>
+                                        <td>4</td>
+                                        <td>4</td>
+                                        <td>4 Higher/AH subjects</td>
+                                    </tr>
+                                    <tr data-pathway="6">
+                                        <td><strong>6</strong></td>
+                                        <td>0</td>
+                                        <td>3</td>
+                                        <td>3</td>
+                                        <td>3 Advanced Highers only</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+
+                    <div id="subjectAreas"></div>
+
+                    <div class="form-group" style="margin-top: 25px;">
+                        <label>Any constraints we should know about?</label>
+                        <div class="option-group">
+                            <div class="option-item" onclick="toggleConstraint(this, 'no-partnership')">
+                                <input type="checkbox" value="no-partnership">
+                                <div class="option-content">
+                                    <div class="option-title">I cannot attend partnership/consortia courses</div>
+                                    <div class="option-desc">These are courses taught at other schools that require travel during the school day</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-back" onclick="prevStep()">← Back</button>
+                        <button class="btn btn-next" id="step5Next" onclick="nextStep()">Next →</button>
+                    </div>
+                </div>
+
+                <!-- Step 6: Additional Info -->
+                <div class="step" data-step="6">
+                    <h2 class="step-title">Anything Else?</h2>
+                    <p class="step-desc">Any other information that might help us with your course choices.</p>
+
+                    <div class="form-group">
+                        <label>Additional notes or questions <span class="optional">- optional</span></label>
+                        <textarea id="notes" placeholder="Is there anything else you'd like us to know? Any questions or concerns about your choices?"></textarea>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-back" onclick="prevStep()">← Back</button>
+                        <button class="btn btn-next" onclick="nextStep()">Review →</button>
+                    </div>
+                </div>
+
+                <!-- Step 7: Review -->
+                <div class="step" data-step="7">
+                    <h2 class="step-title">Review Your Choices</h2>
+                    <p class="step-desc">Please check everything is correct before submitting.</p>
+
+                    <div id="alerts"></div>
+
+                    <div class="summary-block">
+                        <h4>👤 Your Details</h4>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <label>Name</label>
+                                <div class="value" id="sumName">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <label>Class</label>
+                                <div class="value" id="sumClass">-</div>
+                            </div>
+                            <div class="summary-item" id="sumScnBlock" style="display:none;">
+                                <label>SCN</label>
+                                <div class="value" id="sumScn">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>🎯 Your Plans</h4>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <label>Destination</label>
+                                <div class="value" id="sumDest">-</div>
+                            </div>
+                            <div class="summary-item" id="sumCourseBlock">
+                                <label>Intended Course/Career</label>
+                                <div class="value" id="sumCourse">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <label>Area of Interest</label>
+                                <div class="value" id="sumArea">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <label>Planned Leaving</label>
+                                <div class="value" id="sumLeaving">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>🤝 Support</h4>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <label>Discussed at home</label>
+                                <div class="value" id="sumHome">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <label>Careers Advisor</label>
+                                <div class="value" id="sumCareers">-</div>
+                            </div>
+                            <div class="summary-item">
+                                <label>Meeting with Mr Scobie</label>
+                                <div class="value" id="sumMeeting">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>👩‍🏫 Teacher Recommendations</h4>
+                        <div id="sumRecs" class="recs-container" style="background:white; border:1px solid #e9ecef;"></div>
+                    </div>
+
+                    <div class="summary-block">
+                        <h4>📚 Your Subject Choices <span id="sumPathway" style="font-weight:normal; font-size:0.9rem; color:#666;"></span></h4>
+                        <ol class="summary-list" id="sumChoices"></ol>
+                    </div>
+
+                    <div class="summary-block" id="sumConstraintsBlock" style="display:none;">
+                        <h4>⚠️ Constraints</h4>
+                        <p id="sumConstraints"></p>
+                    </div>
+
+                    <div class="summary-block" id="sumNotesBlock" style="display:none;">
+                        <h4>📝 Additional Notes</h4>
+                        <p id="sumNotes"></p>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-back" onclick="prevStep()">← Edit</button>
+                        <button class="btn btn-submit" onclick="submitForm()">✓ Submit Choices</button>
+                    </div>
+                </div>
+
+                <!-- Step 8: Confirmation -->
+                <div class="step" data-step="8">
+                    <div class="confirmation">
+                        <div class="icon">✅</div>
+                        <h2>Choices Recorded!</h2>
+                        <p>Now email your code to complete your submission.</p>
+
+                        <div class="code-box">
+                            <label>Your Submission Code:</label>
+                            <div class="code" id="submissionCode"></div>
+                            <button class="copy-btn" onclick="copyCode()">📋 Copy Code</button>
+                        </div>
+
+                        <div class="info-box email-instructions">
+                            <h5>📧 To complete your submission:</h5>
+                            <ol>
+                                <li><strong>Copy</strong> the code above (click the Copy button)</li>
+                                <li><strong>Send an email</strong> to:<br>
+                                    <span class="email-address">jamie.scobie@queensferry.edin.sch.uk</span>
+                                </li>
+                                <li><strong>Subject line:</strong> S6 Course Choices - [Your Name]</li>
+                                <li><strong>Paste</strong> your code into the email body</li>
+                                <li><strong>Send</strong> the email</li>
+                            </ol>
+                        </div>
+
+                        <a href="mailto:jamie.scobie@queensferry.edin.sch.uk?subject=S6%20Course%20Choices" 
+                           class="btn btn-submit" 
+                           style="display: inline-block; text-decoration: none; margin-top: 10px;"
+                           onclick="copyCodeSilent()">
+                            📧 Open Email App
+                        </a>
+
+                        <p style="font-size: 0.85rem; color: #666; margin-top: 25px;">
+                            💡 Tip: Take a screenshot of this page for your own records.
+                        </p>
+
+                        <button class="btn btn-back" style="margin-top: 15px;" onclick="startOver()">Submit Another Response</button>
+                    </div>
+                </div>
+
+                <!-- Early Leaver Confirmation -->
+                <div class="step" data-step="early-confirm">
+                    <div class="confirmation">
+                        <div class="icon">👋</div>
+                        <h2>Thanks for letting us know!</h2>
+                        <p>We've recorded that you're planning to leave at the end of S5.</p>
+
+                        <div class="code-box">
+                            <label>Your Confirmation Code:</label>
+                            <div class="code" id="earlyLeaverCode"></div>
+                            <button class="copy-btn" onclick="copyEarlyCode()">📋 Copy Code</button>
+                        </div>
+
+                        <div class="info-box email-instructions">
+                            <h5>📧 To complete your submission:</h5>
+                            <ol>
+                                <li><strong>Copy</strong> the code above (click the Copy button)</li>
+                                <li><strong>Send an email</strong> to:<br>
+                                    <span class="email-address">jamie.scobie@queensferry.edin.sch.uk</span>
+                                </li>
+                                <li><strong>Subject line:</strong> S5 Leaver - [Your Name]</li>
+                                <li><strong>Paste</strong> your code into the email body</li>
+                                <li><strong>Send</strong> the email</li>
+                            </ol>
+                        </div>
+
+                        <a href="mailto:jamie.scobie@queensferry.edin.sch.uk?subject=S5%20Leaver" 
+                           class="btn btn-submit" 
+                           style="display: inline-block; text-decoration: none; margin-top: 10px;"
+                           onclick="copyEarlyCodeSilent()">
+                            📧 Open Email App
+                        </a>
+
+                        <div class="info-box warning" style="margin-top: 25px; text-align: left;">
+                            <h5>📋 Remember to:</h5>
+                            <ul>
+                                <li>Complete any applications for your next destination</li>
+                                <li>Speak to the Careers Advisor if you need help</li>
+                                <li>Let your guidance teacher know your plans</li>
+                            </ul>
+                        </div>
+
+                        <p style="font-size: 0.85rem; color: #666; margin-top: 25px;">
+                            Plans changed? <a href="#" onclick="startOver(); return false;" style="color: #2d5a87;">Click here to complete S6 choices instead</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN/STAFF MODE -->
+        <div id="adminMode" class="card hidden">
+            <div class="card-header">
+                <h1>👩‍🏫 Review Student Submissions</h1>
+                <p>Paste student codes to review their choices</p>
+            </div>
+
+            <div class="card-body">
+                <div class="admin-section">
+                    <h3>Paste Submission Codes</h3>
+                    <p class="hint" style="margin-bottom: 15px;">Paste one or more student codes below (one per line, or comma-separated). You can paste directly from emails.</p>
+                    <textarea class="paste-area" id="pasteArea" placeholder="Paste student submission codes here..."></textarea>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-next" onclick="processSubmissions()">Load Submissions</button>
+                        <button class="btn btn-back" onclick="clearSubmissions()">Clear All</button>
+                        <button class="btn btn-back" onclick="exportCSV()" id="exportBtn" style="display:none;">📥 Export CSV</button>
+                    </div>
+                </div>
+
+                <div class="admin-section">
+                    <h3>Loaded Submissions <span id="subCount" style="color: #666; font-weight: normal;">(0)</span></h3>
+                    <div class="submissions-list" id="submissionsList">
+                        <div class="info-box">
+                            <p>No submissions loaded yet. Paste student codes above and click "Load Submissions".</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // SUBJECTS DATA
+        // ============================================
+        const subjects = [
+            // English
+            { id: 'n5-eng', name: 'English', level: 'N5', cat: 'English', periods: 4 },
+            { id: 'h-eng', name: 'English', level: 'H', cat: 'English', periods: 6 },
+            { id: 'ah-eng', name: 'English', level: 'AH', cat: 'English', periods: 6 },
+            // Expressive Arts
+            { id: 'n5-art', name: 'Art and Design', level: 'N5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-art', name: 'Art and Design', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'ah-art', name: 'Art and Design', level: 'AH', cat: 'Expressive Arts', periods: 6 },
+            { id: 'n5-media', name: 'Media', level: 'N5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-media', name: 'Media', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'l5-photo', name: 'Photography', level: 'L5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-photo', name: 'Photography', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'l5-draw', name: 'Drawing and Painting', level: 'L5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'n5-drama', name: 'Drama', level: 'N5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-drama', name: 'Drama', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'ah-drama', name: 'Drama', level: 'AH', cat: 'Expressive Arts', periods: 6 },
+            { id: 'l6-theatre', name: 'Professional Theatre Preparation', level: 'L6', cat: 'Expressive Arts', periods: 4 },
+            { id: 'l6-film', name: 'Film and Screen', level: 'L6', cat: 'Expressive Arts', periods: 4 },
+            { id: 'l6-musical', name: 'Musical Theatre', level: 'L6', cat: 'Expressive Arts', periods: 4 },
+            { id: 'n5-music', name: 'Music', level: 'N5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-music', name: 'Music', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'ah-music', name: 'Music', level: 'AH', cat: 'Expressive Arts', periods: 6 },
+            { id: 'n5-mustech', name: 'Music Technology', level: 'N5', cat: 'Expressive Arts', periods: 4 },
+            { id: 'h-mustech', name: 'Music Technology', level: 'H', cat: 'Expressive Arts', periods: 6 },
+            { id: 'l6-sound', name: 'Sound Production', level: 'L6', cat: 'Expressive Arts', periods: 4 },
+            // Health & Wellbeing
+            { id: 'n5-pe', name: 'Physical Education', level: 'N5', cat: 'Health & Wellbeing', periods: 4 },
+            { id: 'h-pe', name: 'Physical Education', level: 'H', cat: 'Health & Wellbeing', periods: 6 },
+            { id: 'ah-pe', name: 'Physical Education', level: 'AH', cat: 'Health & Wellbeing', periods: 6 },
+            { id: 'n5-sport', name: 'Sport and Recreation', level: 'N5', cat: 'Health & Wellbeing', periods: 4 },
+            { id: 'l5-fitness', name: 'Sport and Fitness', level: 'L5', cat: 'Health & Wellbeing', periods: 4 },
+            { id: 'l6-sportlead', name: 'Sport Leadership', level: 'L6', cat: 'Health & Wellbeing', periods: 4 },
+            { id: 'n5-dance', name: 'Dance', level: 'N5', cat: 'Health & Wellbeing', periods: 4 },
+            { id: 'h-dance', name: 'Dance', level: 'H', cat: 'Health & Wellbeing', periods: 6 },
+            // Languages
+            { id: 'n5-french', name: 'French', level: 'N5', cat: 'Languages', periods: 4 },
+            { id: 'h-french', name: 'French', level: 'H', cat: 'Languages', periods: 6 },
+            { id: 'ah-french', name: 'French', level: 'AH', cat: 'Languages', periods: 6, p: true },
+            { id: 'n5-spanish', name: 'Spanish', level: 'N5', cat: 'Languages', periods: 4 },
+            { id: 'h-spanish', name: 'Spanish', level: 'H', cat: 'Languages', periods: 6 },
+            { id: 'ah-spanish', name: 'Spanish', level: 'AH', cat: 'Languages', periods: 6, p: true },
+            { id: 'n5-mandarin', name: 'Mandarin', level: 'N5', cat: 'Languages', periods: 4 },
+            { id: 'h-mandarin', name: 'Mandarin', level: 'H', cat: 'Languages', periods: 6 },
+            { id: 'ah-mandarin', name: 'Mandarin', level: 'AH', cat: 'Languages', periods: 6, p: true },
+            { id: 'h-esol', name: 'ESOL', level: 'H', cat: 'Languages', periods: 6 },
+            // Mathematics
+            { id: 'n5-maths', name: 'Mathematics', level: 'N5', cat: 'Mathematics', periods: 4 },
+            { id: 'h-maths', name: 'Mathematics', level: 'H', cat: 'Mathematics', periods: 6 },
+            { id: 'ah-maths', name: 'Mathematics', level: 'AH', cat: 'Mathematics', periods: 6 },
+            { id: 'n5-appmaths', name: 'Applications of Maths', level: 'N5', cat: 'Mathematics', periods: 4 },
+            { id: 'h-appmaths', name: 'Applications of Maths', level: 'H', cat: 'Mathematics', periods: 6 },
+            { id: 'ah-mechanics', name: 'Maths of Mechanics', level: 'AH', cat: 'Mathematics', periods: 6, p: true },
+            // Sciences
+            { id: 'n5-bio', name: 'Biology', level: 'N5', cat: 'Sciences', periods: 4 },
+            { id: 'h-humbio', name: 'Human Biology', level: 'H', cat: 'Sciences', periods: 6 },
+            { id: 'ah-bio', name: 'Biology', level: 'AH', cat: 'Sciences', periods: 6 },
+            { id: 'n5-chem', name: 'Chemistry', level: 'N5', cat: 'Sciences', periods: 4 },
+            { id: 'h-chem', name: 'Chemistry', level: 'H', cat: 'Sciences', periods: 6 },
+            { id: 'ah-chem', name: 'Chemistry', level: 'AH', cat: 'Sciences', periods: 6 },
+            { id: 'n5-phys', name: 'Physics', level: 'N5', cat: 'Sciences', periods: 4 },
+            { id: 'h-phys', name: 'Physics', level: 'H', cat: 'Sciences', periods: 6 },
+            { id: 'ah-phys', name: 'Physics', level: 'AH', cat: 'Sciences', periods: 6, p: true },
+            { id: 'h-psych', name: 'Psychology', level: 'H', cat: 'Sciences', periods: 6 },
+            { id: 'n5-health', name: 'Health Sector', level: 'N5', cat: 'Sciences', periods: 4 },
+            { id: 'n5-labsci', name: 'Laboratory Science', level: 'N5', cat: 'Sciences', periods: 4 },
+            { id: 'l6-scitech', name: 'Scientific Technologies (FA)', level: 'L6', cat: 'Sciences', periods: 4, p: true },
+            // Social Subjects
+            { id: 'n5-geog', name: 'Geography', level: 'N5', cat: 'Social Subjects', periods: 4 },
+            { id: 'h-geog', name: 'Geography', level: 'H', cat: 'Social Subjects', periods: 6 },
+            { id: 'ah-geog', name: 'Geography', level: 'AH', cat: 'Social Subjects', periods: 6, p: true },
+            { id: 'n5-hist', name: 'History', level: 'N5', cat: 'Social Subjects', periods: 4 },
+            { id: 'h-hist', name: 'History', level: 'H', cat: 'Social Subjects', periods: 6 },
+            { id: 'ah-hist', name: 'History', level: 'AH', cat: 'Social Subjects', periods: 6 },
+            { id: 'n5-ms', name: 'Modern Studies', level: 'N5', cat: 'Social Subjects', periods: 4 },
+            { id: 'h-ms', name: 'Modern Studies', level: 'H', cat: 'Social Subjects', periods: 6 },
+            { id: 'ah-ms', name: 'Modern Studies', level: 'AH', cat: 'Social Subjects', periods: 6, p: true },
+            { id: 'h-pol', name: 'Politics', level: 'H', cat: 'Social Subjects', periods: 6 },
+            { id: 'n5-rmps', name: 'RMPS', level: 'N5', cat: 'Social Subjects', periods: 4 },
+            { id: 'h-rmps', name: 'RMPS', level: 'H', cat: 'Social Subjects', periods: 6 },
+            { id: 'ah-rmps', name: 'RMPS', level: 'AH', cat: 'Social Subjects', periods: 6 },
+            { id: 'h-phil', name: 'Philosophy', level: 'H', cat: 'Social Subjects', periods: 6 },
+            // Business
+            { id: 'n5-bus', name: 'Business Management', level: 'N5', cat: 'Business', periods: 4 },
+            { id: 'h-bus', name: 'Business Management', level: 'H', cat: 'Business', periods: 6 },
+            { id: 'ah-bus', name: 'Business Management', level: 'AH', cat: 'Business', periods: 6, p: true },
+            { id: 'n5-acc', name: 'Accounting', level: 'N5', cat: 'Business', periods: 4 },
+            { id: 'h-acc', name: 'Accounting', level: 'H', cat: 'Business', periods: 6 },
+            { id: 'h-econ', name: 'Economics', level: 'H', cat: 'Business', periods: 6, p: true },
+            { id: 'n5-travel', name: 'Travel and Tourism', level: 'N5', cat: 'Business', periods: 4 },
+            { id: 'l6-travel', name: 'Travel and Tourism', level: 'L6', cat: 'Business', periods: 4 },
+            { id: 'l6-enterprise', name: 'Enterprise and Employability', level: 'L6', cat: 'Business', periods: 4 },
+            // Technologies
+            { id: 'n5-comp', name: 'Computing Science', level: 'N5', cat: 'Technologies', periods: 4 },
+            { id: 'h-comp', name: 'Computing Science', level: 'H', cat: 'Technologies', periods: 6 },
+            { id: 'ah-comp', name: 'Computing Science', level: 'AH', cat: 'Technologies', periods: 6, p: true },
+            { id: 'l5-comptech', name: 'Computing Technologies', level: 'L5', cat: 'Technologies', periods: 4 },
+            { id: 'l6-comptech', name: 'Computing Technologies', level: 'L6', cat: 'Technologies', periods: 4 },
+            { id: 'l5-games', name: 'Computer Games Design', level: 'L5', cat: 'Technologies', periods: 4 },
+            { id: 'l6-games', name: 'Computer Games Design', level: 'L6', cat: 'Technologies', periods: 4 },
+            { id: 'n5-dm', name: 'Design and Manufacture', level: 'N5', cat: 'Technologies', periods: 4 },
+            { id: 'h-dm', name: 'Design and Manufacture', level: 'H', cat: 'Technologies', periods: 6 },
+            { id: 'n5-graph', name: 'Graphic Communication', level: 'N5', cat: 'Technologies', periods: 4 },
+            { id: 'h-graph', name: 'Graphic Communication', level: 'H', cat: 'Technologies', periods: 6 },
+            { id: 'ah-graph', name: 'Graphic Communication', level: 'AH', cat: 'Technologies', periods: 6 },
+            { id: 'l5-dec', name: 'Design Engineer Construct', level: 'L5', cat: 'Technologies', periods: 4 },
+            { id: 'l6-dec', name: 'Design Engineer Construct', level: 'L6', cat: 'Technologies', periods: 4 },
+            { id: 'n5-wood', name: 'Practical Woodwork', level: 'N5', cat: 'Technologies', periods: 4 },
+            { id: 'l5-jewel', name: 'Jewellery', level: 'L5', cat: 'Technologies', periods: 4 },
+            // Vocational
+            { id: 'n5-hair', name: 'Hairdressing', level: 'N5', cat: 'Vocational', periods: 4 },
+            { id: 'n5-fashion', name: 'Fashion and Textile', level: 'N5', cat: 'Vocational', periods: 4 },
+            { id: 'n5-hosp', name: 'Hospitality', level: 'N5', cat: 'Vocational', periods: 4 },
+            { id: 'n5-cook', name: 'Practical Cookery', level: 'N5', cat: 'Vocational', periods: 4 },
+            { id: 'l4-cook', name: 'Professional Cookery', level: 'L4', cat: 'Vocational', periods: 4 },
+            { id: 'n5-child', name: 'Early Learning and Childcare', level: 'N5', cat: 'Vocational', periods: 4 },
+            { id: 'h-child', name: 'Childcare and Development', level: 'H', cat: 'Vocational', periods: 6 },
+            // Foundation Apprenticeships
+            { id: 'fa-bus', name: 'FA Business Skills', level: 'L6', cat: 'Foundation Apprenticeships', periods: 4, p: true },
+            { id: 'fa-food', name: 'FA Food and Drink', level: 'L6', cat: 'Foundation Apprenticeships', periods: 4, p: true },
+            { id: 'fa-cyp', name: 'FA Social Services (CYP)', level: 'L6', cat: 'Foundation Apprenticeships', periods: 4, p: true },
+            { id: 'fa-health', name: 'FA Social Services (Healthcare)', level: 'L6', cat: 'Foundation Apprenticeships', periods: 4, p: true },
+            { id: 'fa-creative', name: 'FA Creative and Digital Media', level: 'L6', cat: 'Foundation Apprenticeships', periods: 4, p: true }
+        ];
+
+        // Valid pathway combinations
+        const validPathways = [
+            { small: 6, large: 0, ah: false, name: 'Pathway 1', desc: '6 National 5 level subjects' },
+            { small: 4, large: 1, ah: false, name: 'Pathway 2', desc: '4 N5 + 1 Higher/AH' },
+            { small: 3, large: 2, ah: false, name: 'Pathway 3', desc: '3 N5 + 2 Higher/AH' },
+            { small: 1, large: 3, ah: false, name: 'Pathway 4', desc: '1 N5 + 3 Higher/AH' },
+            { small: 0, large: 4, ah: false, name: 'Pathway 5', desc: '4 Higher/AH subjects' },
+            { small: 0, large: 3, ah: true, name: 'Pathway 6', desc: '3 Advanced Highers only' }
+        ];
+
+        // ============================================
+        // STATE
+        // ============================================
+        let currentStep = 1;
+        const totalSteps = 8;
+        let isEarlyLeaver = false;
+        let data = {
+            scn: '',
+            forename: '',
+            surname: '',
+            regClass: '',
+            destType: '',
+            destCourse: '',
+            destArea: '',
+            leavingDate: '',
+            collegeApplied: '',
+            apprenticeKnows: '',
+            discussedHome: '',
+            careersVisit: '',
+            wantsMeeting: '',
+            recs: [],
+            choices: [],
+            constraints: [],
+            notes: ''
+        };
+        let loadedSubmissions = [];
+
+        // ============================================
+        // MODE SWITCHING
+        // ============================================
+        function setMode(mode) {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('studentMode').classList.toggle('hidden', mode !== 'student');
+            document.getElementById('adminMode').classList.toggle('hidden', mode !== 'admin');
+        }
+
+        // ============================================
+        // INIT
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSubjectAreas();
+            
+            document.getElementById('destArea').addEventListener('change', function() {
+                document.getElementById('otherAreaGroup').style.display = this.value === 'Other' ? 'block' : 'none';
+            });
+            
+            document.getElementById('newRec').addEventListener('keypress', e => {
+                if (e.key === 'Enter') { e.preventDefault(); addRec(); }
+            });
+        });
+
+        // ============================================
+        // EARLY LEAVER HANDLING
+        // ============================================
+        function handleLeavingDateChange(value) {
+            if (value === 'End of S5') {
+                document.getElementById('earlyLeaverSection').style.display = 'block';
+                document.getElementById('s6PlanSection').style.display = 'none';
+                document.getElementById('progressBar').style.display = 'none';
+            } else {
+                document.getElementById('earlyLeaverSection').style.display = 'none';
+                document.getElementById('s6PlanSection').style.display = 'block';
+                document.getElementById('progressBar').style.display = 'flex';
+            }
+        }
+
+        function cancelEarlyLeaver() {
+            data.leavingDate = 'End of S6';
+            document.querySelectorAll('[name="leavingDate"]').forEach(r => {
+                r.checked = r.value === 'End of S6';
+                r.closest('.option-item').classList.toggle('selected', r.value === 'End of S6');
+            });
+            handleLeavingDateChange('End of S6');
+        }
+
+        function submitEarlyLeaver() {
+            const dest = document.getElementById('earlyLeaverDest').value;
+            if (!dest) {
+                alert('Please select where you\'re planning to go after S5');
+                return;
+            }
+
+            const submission = {
+                v: 3,
+                ts: Date.now(),
+                type: 'early-leaver',
+                scn: data.scn,
+                fn: data.forename,
+                sn: data.surname,
+                cl: data.regClass,
+                ld: 'End of S5',
+                dt: dest
+            };
+
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(submission))));
+            document.getElementById('earlyLeaverCode').textContent = code;
+            
+            // Show early leaver confirmation
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector('.step[data-step="early-confirm"]').classList.add('active');
+            document.getElementById('progressBar').style.display = 'none';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function copyEarlyCode() {
+            const code = document.getElementById('earlyLeaverCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#2d5a87';
+                }, 2000);
+            }).catch(() => {
+                alert('Code copied!');
+            });
+        }
+
+        function copyEarlyCodeSilent() {
+            const code = document.getElementById('earlyLeaverCode').textContent;
+            navigator.clipboard.writeText(code).catch(() => {});
+        }
+
+        // ============================================
+        // NAVIGATION
+        // ============================================
+        function nextStep() {
+            if (!validateStep()) return;
+            saveStep();
+            if (currentStep < totalSteps) {
+                currentStep++;
+                showStep();
+            }
+            if (currentStep === 7) populateSummary();
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep();
+            }
+        }
+
+        function showStep() {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.querySelector(`.step[data-step="${currentStep}"]`).classList.add('active');
+            
+            document.querySelectorAll('.progress-step').forEach((s, i) => {
+                s.classList.remove('active', 'completed');
+                if (i + 1 === currentStep) s.classList.add('active');
+                else if (i + 1 < currentStep) s.classList.add('completed');
+            });
+            
+            document.querySelectorAll('.progress-connector').forEach((c, i) => {
+                c.classList.toggle('completed', i < currentStep - 1);
+            });
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateStep() {
+            switch (currentStep) {
+                case 1:
+                    if (!document.getElementById('forename').value.trim()) { alert('Please enter your first name'); return false; }
+                    if (!document.getElementById('surname').value.trim()) { alert('Please enter your surname'); return false; }
+                    if (!document.getElementById('regClass').value.trim()) { alert('Please enter your registration class'); return false; }
+                    break;
+                case 2:
+                    if (!data.leavingDate) { alert('Please select when you plan to leave school'); return false; }
+                    if (data.leavingDate === 'End of S5') { return false; } // Handled by early leaver flow
+                    if (!data.destType) { alert('Please select where you plan to go after S6'); return false; }
+                    if (data.destType === 'University' && !document.getElementById('uniCourse').value.trim()) {
+                        alert('Please enter the course you hope to study at university'); return false;
+                    }
+                    if (data.destType === 'College' && !document.getElementById('collegeCourse').value.trim()) {
+                        alert('Please enter the course you hope to study at college'); return false;
+                    }
+                    if (!document.getElementById('destArea').value) { alert('Please select your general area of interest'); return false; }
+                    break;
+                case 3:
+                    if (!data.discussedHome) { alert('Please indicate whether you\'ve discussed your choices at home'); return false; }
+                    break;
+                case 5:
+                    const pathwayStatus = getPathwayStatus();
+                    if (!pathwayStatus.valid) {
+                        alert('Your subject combination doesn\'t match a valid pathway. Please adjust your choices.\n\n' + pathwayStatus.message);
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        function saveStep() {
+            switch (currentStep) {
+                case 1:
+                    data.scn = document.getElementById('scn').value.trim();
+                    data.forename = document.getElementById('forename').value.trim();
+                    data.surname = document.getElementById('surname').value.trim();
+                    data.regClass = document.getElementById('regClass').value.trim();
+                    break;
+                case 2:
+                    data.destArea = document.getElementById('destArea').value;
+                    if (data.destArea === 'Other') {
+                        data.destArea = document.getElementById('otherArea').value.trim() || 'Other';
+                    }
+                    if (data.destType === 'University') {
+                        data.destCourse = document.getElementById('uniCourse').value.trim();
+                    } else if (data.destType === 'College') {
+                        data.destCourse = document.getElementById('collegeCourse').value.trim();
+                    } else if (data.destType === 'Apprenticeship') {
+                        data.destCourse = document.getElementById('apprenticeshipType').value.trim();
+                    } else if (data.destType === 'Employment') {
+                        data.destCourse = document.getElementById('employmentType').value.trim();
+                    } else {
+                        data.destCourse = '';
+                    }
+                    break;
+                case 6:
+                    data.notes = document.getElementById('notes').value.trim();
+                    break;
+            }
+        }
+
+        function startOver() {
+            currentStep = 1;
+            isEarlyLeaver = false;
+            data = {
+                scn: '', forename: '', surname: '', regClass: '', destType: '', destCourse: '', destArea: '',
+                leavingDate: '', collegeApplied: '', apprenticeKnows: '',
+                discussedHome: '', careersVisit: '', wantsMeeting: '',
+                recs: [], choices: [], constraints: [], notes: ''
+            };
+            
+            document.getElementById('scn').value = '';
+            document.getElementById('forename').value = '';
+            document.getElementById('surname').value = '';
+            document.getElementById('regClass').value = '';
+            document.getElementById('destArea').value = '';
+            document.getElementById('uniCourse').value = '';
+            document.getElementById('collegeCourse').value = '';
+            document.getElementById('apprenticeshipType').value = '';
+            document.getElementById('employmentType').value = '';
+            document.getElementById('earlyLeaverDest').value = '';
+            document.getElementById('notes').value = '';
+            document.querySelectorAll('.option-item').forEach(o => o.classList.remove('selected'));
+            document.querySelectorAll('.option-item input[type="radio"]').forEach(i => i.checked = false);
+            document.querySelectorAll('.option-item input[type="checkbox"]').forEach(i => i.checked = false);
+            
+            document.getElementById('uniCourseQuestion').style.display = 'none';
+            document.getElementById('collegeCourseQuestion').style.display = 'none';
+            document.getElementById('apprenticeshipQuestion').style.display = 'none';
+            document.getElementById('employmentQuestion').style.display = 'none';
+            document.getElementById('collegeHelp').style.display = 'none';
+            document.getElementById('apprenticeHelp').style.display = 'none';
+            document.getElementById('earlyLeaverSection').style.display = 'none';
+            document.getElementById('s6PlanSection').style.display = 'block';
+            document.getElementById('progressBar').style.display = 'flex';
+            
+            renderRecs();
+            updateChoicesDisplay();
+            showStep();
+        }
+
+        // ============================================
+        // OPTIONS
+        // ============================================
+        function selectOption(el, name, value) {
+            el.closest('.option-group').querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('selected');
+                item.querySelector('input').checked = false;
+            });
+            
+            el.classList.add('selected');
+            el.querySelector('input').checked = true;
+            data[name] = value;
+            
+            // Handle leaving date change
+            if (name === 'leavingDate') {
+                handleLeavingDateChange(value);
+            }
+            
+            if (name === 'destType') {
+                document.getElementById('uniCourseQuestion').style.display = value === 'University' ? 'block' : 'none';
+                document.getElementById('collegeCourseQuestion').style.display = value === 'College' ? 'block' : 'none';
+                document.getElementById('apprenticeshipQuestion').style.display = value === 'Apprenticeship' ? 'block' : 'none';
+                document.getElementById('employmentQuestion').style.display = value === 'Employment' ? 'block' : 'none';
+                
+                if (value !== 'College') {
+                    data.collegeApplied = '';
+                    document.getElementById('collegeHelp').style.display = 'none';
+                }
+                if (value !== 'Apprenticeship') {
+                    data.apprenticeKnows = '';
+                    document.getElementById('apprenticeHelp').style.display = 'none';
+                }
+            }
+            
+            if (name === 'collegeApplied') {
+                document.getElementById('collegeHelp').style.display = (value === 'No' || value === 'NotSure') ? 'block' : 'none';
+            }
+            
+            if (name === 'apprenticeKnows') {
+                document.getElementById('apprenticeHelp').style.display = value === 'No' ? 'block' : 'none';
+            }
+        }
+
+        function toggleConstraint(el, value) {
+            const cb = el.querySelector('input');
+            cb.checked = !cb.checked;
+            el.classList.toggle('selected', cb.checked);
+            
+            if (cb.checked) {
+                if (!data.constraints.includes(value)) data.constraints.push(value);
+            } else {
+                data.constraints = data.constraints.filter(c => c !== value);
+            }
+        }
+
+        // ============================================
+        // RECOMMENDATIONS
+        // ============================================
+        function addRec() {
+            const input = document.getElementById('newRec');
+            const val = input.value.trim();
+            if (val && !data.recs.includes(val)) {
+                data.recs.push(val);
+                renderRecs();
+            }
+            input.value = '';
+            input.focus();
+        }
+
+        function removeRec(i) {
+            data.recs.splice(i, 1);
+            renderRecs();
+        }
+
+        function renderRecs() {
+            const container = document.getElementById('recsContainer');
+            if (data.recs.length === 0) {
+                container.innerHTML = '<span style="color:#999; font-style:italic;">No recommendations added yet</span>';
+                return;
+            }
+            container.innerHTML = data.recs.map((r, i) => 
+                `<span class="rec-chip">${r}<button onclick="removeRec(${i})">×</button></span>`
+            ).join('');
+        }
+
+        // ============================================
+        // PATHWAY LOGIC
+        // ============================================
+        function getSubjectCounts() {
+            let small = 0, large = 0, ah = 0;
+            data.choices.forEach(id => {
+                const s = subjects.find(x => x.id === id);
+                if (s) {
+                    if (s.periods === 4) small++;
+                    if (s.periods === 6) {
+                        large++;
+                        if (s.level === 'AH') ah++;
+                    }
+                }
+            });
+            return { small, large, ah };
+        }
+
+        function getPathwayStatus() {
+            const counts = getSubjectCounts();
+            
+            for (const pw of validPathways) {
+                if (counts.small === pw.small && counts.large === pw.large) {
+                    if (pw.ah && counts.ah !== counts.large) {
+                        continue;
+                    }
+                    return {
+                        valid: true,
+                        pathway: pw.name,
+                        desc: pw.desc,
+                        message: `Valid: ${pw.name} - ${pw.desc}`
+                    };
+                }
+            }
+
+            let message = `Current: ${counts.small} small (4p) + ${counts.large} large (6p) subjects.\n\nValid combinations:\n`;
+            validPathways.forEach(pw => {
+                message += `• ${pw.small} small + ${pw.large} large${pw.ah ? ' (AH only)' : ''}\n`;
+            });
+
+            return {
+                valid: false,
+                pathway: null,
+                message: message
+            };
+        }
+
+        function canAddSubject(subjectId) {
+            const s = subjects.find(x => x.id === subjectId);
+            if (!s) return false;
+
+            const counts = getSubjectCounts();
+            const newSmall = counts.small + (s.periods === 4 ? 1 : 0);
+            const newLarge = counts.large + (s.periods === 6 ? 1 : 0);
+            const newAH = counts.ah + (s.level === 'AH' ? 1 : 0);
+
+            for (const pw of validPathways) {
+                if (newSmall <= pw.small && newLarge <= pw.large) {
+                    if (pw.ah) {
+                        if (newLarge > 0 && newAH === newLarge) {
+                            return true;
+                        }
+                        if (newLarge === 0) return true;
+                    } else {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // ============================================
+        // SUBJECTS
+        // ============================================
+        function renderSubjectAreas() {
+            const container = document.getElementById('subjectAreas');
+            const categories = [...new Set(subjects.map(s => s.cat))];
+            
+            container.innerHTML = categories.map((cat, catIndex) => {
+                const catSubjects = subjects.filter(s => s.cat === cat);
+                const isFirst = catIndex === 0;
+                return `
+                    <div class="subject-area">
+                        <div class="area-header ${!isFirst ? 'collapsed' : ''}" onclick="toggleArea(this)">
+                            ${cat} <span class="toggle">▼</span>
+                        </div>
+                        <div class="area-subjects ${!isFirst ? 'hidden' : ''}">
+                            ${catSubjects.map(s => `
+                                <button class="subject-btn" data-id="${s.id}" onclick="toggleSubject('${s.id}')">
+                                    <span class="check">✓</span>
+                                    <span class="info">
+                                        <span class="subject-name">${s.name}</span>
+                                        <span class="subject-level">${s.level}</span>
+                                    </span>
+                                    <span class="periods-tag">${s.periods}p</span>
+                                    ${s.p ? '<span class="partnership-tag">P</span>' : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleArea(header) {
+            header.classList.toggle('collapsed');
+            header.nextElementSibling.classList.toggle('hidden');
+        }
+
+        function toggleSubject(id) {
+            const idx = data.choices.indexOf(id);
+            if (idx > -1) {
+                data.choices.splice(idx, 1);
+            } else {
+                if (!canAddSubject(id)) {
+                    alert('Adding this subject would not lead to a valid pathway combination.');
+                    return;
+                }
+                data.choices.push(id);
+            }
+            updateChoicesDisplay();
+        }
+
+        function removeChoice(id) {
+            data.choices = data.choices.filter(c => c !== id);
+            updateChoicesDisplay();
+        }
+
+        function updateChoicesDisplay() {
+            const counts = getSubjectCounts();
+            const status = getPathwayStatus();
+
+            document.getElementById('smallCount').textContent = counts.small;
+            document.getElementById('largeCount').textContent = counts.large;
+
+            const indicator = document.getElementById('pathwayIndicator');
+            indicator.classList.remove('valid', 'invalid', 'partial');
+            
+            if (data.choices.length === 0) {
+                indicator.innerHTML = `
+                    <div class="status">Select your subjects</div>
+                    <div class="details">Choose a valid combination from the pathways</div>
+                `;
+            } else if (status.valid) {
+                indicator.classList.add('valid');
+                indicator.innerHTML = `
+                    <div class="status">✓ ${status.pathway}</div>
+                    <div class="details">${status.desc}</div>
+                `;
+            } else {
+                indicator.classList.add('partial');
+                indicator.innerHTML = `
+                    <div class="status">⚠ Not yet valid</div>
+                    <div class="details">Keep adding subjects to complete a pathway</div>
+                    <div class="subject-counts">
+                        <span class="subject-count">${counts.small} × N5/L5/L6</span>
+                        <span class="subject-count">${counts.large} × H/AH</span>
+                    </div>
+                `;
+            }
+
+            document.querySelectorAll('.pathway-table tbody tr').forEach(row => {
+                row.classList.remove('current');
+            });
+            if (status.valid) {
+                const pathwayNum = status.pathway.replace('Pathway ', '');
+                const row = document.querySelector(`.pathway-table tr[data-pathway="${pathwayNum}"]`);
+                if (row) row.classList.add('current');
+            }
+
+            document.querySelectorAll('.subject-btn').forEach(btn => {
+                const id = btn.dataset.id;
+                const isSelected = data.choices.includes(id);
+                btn.classList.toggle('selected', isSelected);
+                
+                if (!isSelected) {
+                    btn.classList.toggle('disabled', !canAddSubject(id));
+                } else {
+                    btn.classList.remove('disabled');
+                }
+            });
+
+            const list = document.getElementById('choicesList');
+            if (data.choices.length === 0) {
+                list.innerHTML = '<div class="empty-choices">Click subjects below to add them</div>';
+                return;
+            }
+
+            list.innerHTML = data.choices.map((id, i) => {
+                const s = subjects.find(x => x.id === id);
+                let badgeClass = 'small';
+                if (s.level === 'AH') badgeClass = 'ah';
+                else if (s.periods === 6) badgeClass = 'large';
+                
+                return `
+                    <div class="choice-item">
+                        <span class="order">${i + 1}</span>
+                        <span class="name">${s.level} ${s.name}</span>
+                        <span class="level-badge ${badgeClass}">${s.periods}p</span>
+                        ${s.p ? '<span class="partnership-tag" style="font-size:0.7rem;">Partnership</span>' : ''}
+                        <button class="remove" onclick="removeChoice('${id}')">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // SUMMARY
+        // ============================================
+        function populateSummary() {
+            document.getElementById('sumName').textContent = `${data.forename} ${data.surname}`;
+            document.getElementById('sumClass').textContent = data.regClass;
+            
+            if (data.scn) {
+                document.getElementById('sumScnBlock').style.display = 'block';
+                document.getElementById('sumScn').textContent = data.scn;
+            } else {
+                document.getElementById('sumScnBlock').style.display = 'none';
+            }
+            
+            document.getElementById('sumDest').textContent = data.destType;
+            document.getElementById('sumCourse').textContent = data.destCourse || '-';
+            document.getElementById('sumArea').textContent = data.destArea;
+            document.getElementById('sumLeaving').textContent = data.leavingDate;
+            
+            document.getElementById('sumHome').textContent = data.discussedHome === 'Yes' ? 'Yes' : data.discussedHome === 'No' ? 'Not yet' : 'N/A';
+            document.getElementById('sumCareers').textContent = data.careersVisit || 'Not specified';
+            
+            const meetingText = {
+                'Yes': 'Yes - wants to discuss',
+                'No': 'No - confident in choices',
+                'IfNeeded': 'Only if issues arise'
+            };
+            document.getElementById('sumMeeting').textContent = meetingText[data.wantsMeeting] || 'Not specified';
+
+            const recsDiv = document.getElementById('sumRecs');
+            recsDiv.innerHTML = data.recs.length > 0 
+                ? data.recs.map(r => `<span class="rec-chip">${r}</span>`).join('')
+                : '<span style="color:#999; font-style:italic;">No recommendations provided</span>';
+
+            const status = getPathwayStatus();
+            document.getElementById('sumPathway').textContent = status.valid ? `(${status.pathway})` : '';
+
+            const choicesList = document.getElementById('sumChoices');
+            choicesList.innerHTML = data.choices.map((id, i) => {
+                const s = subjects.find(x => x.id === id);
+                return `<li><span class="num">${i + 1}</span><span>${s.level} ${s.name}${s.p ? ' <em style="color:#856404;">(Partnership)</em>' : ''}</span></li>`;
+            }).join('');
+
+            const constraintsBlock = document.getElementById('sumConstraintsBlock');
+            if (data.constraints.length > 0) {
+                constraintsBlock.style.display = 'block';
+                document.getElementById('sumConstraints').textContent = data.constraints.includes('no-partnership') 
+                    ? 'Cannot attend partnership/consortia courses' : data.constraints.join(', ');
+            } else {
+                constraintsBlock.style.display = 'none';
+            }
+
+            const notesBlock = document.getElementById('sumNotesBlock');
+            if (data.notes) {
+                notesBlock.style.display = 'block';
+                document.getElementById('sumNotes').textContent = data.notes;
+            } else {
+                notesBlock.style.display = 'none';
+            }
+
+            generateAlerts();
+        }
+
+        function generateAlerts() {
+            const alertsDiv = document.getElementById('alerts');
+            let alerts = [];
+
+            if (data.constraints.includes('no-partnership')) {
+                const partnershipChoices = data.choices.filter(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s && s.p;
+                });
+                if (partnershipChoices.length > 0) {
+                    const names = partnershipChoices.map(id => {
+                        const s = subjects.find(x => x.id === id);
+                        return `${s.level} ${s.name}`;
+                    }).join(', ');
+                    alerts.push({
+                        type: 'error',
+                        icon: '❌',
+                        msg: `You've selected partnership courses but indicated you cannot attend them: <strong>${names}</strong>. Please remove these or change your constraint.`
+                    });
+                }
+            }
+
+            if (data.recs.length > 0) {
+                const choiceNames = data.choices.map(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s ? `${s.level} ${s.name}`.toLowerCase() : '';
+                });
+                
+                const recsNotChosen = data.recs.filter(r => {
+                    const rLower = r.toLowerCase();
+                    return !choiceNames.some(c => c.includes(rLower.replace(/^(ah|h|n5|l5|l6|l4)\s*/i, '').trim()));
+                });
+
+                if (recsNotChosen.length > 0) {
+                    alerts.push({
+                        type: 'warning',
+                        icon: '⚠️',
+                        msg: `Some teacher recommendations aren't in your choices: <strong>${recsNotChosen.join(', ')}</strong>. This may be fine, but you might want to reconsider.`
+                    });
+                }
+            }
+
+            if (data.discussedHome === 'No') {
+                alerts.push({
+                    type: 'info',
+                    icon: 'ℹ️',
+                    msg: 'You haven\'t discussed your choices at home yet. It\'s a good idea to talk to a parent/carer about your plans.'
+                });
+            }
+
+            if (data.destType === 'College' && (data.collegeApplied === 'No' || data.collegeApplied === 'NotSure')) {
+                alerts.push({
+                    type: 'warning',
+                    icon: '🎓',
+                    msg: 'Remember: College applications are open now. Make sure you apply soon!'
+                });
+            }
+
+            if (data.destType === 'Apprenticeship' && data.apprenticeKnows === 'No') {
+                alerts.push({
+                    type: 'info',
+                    icon: '🔧',
+                    msg: 'You\'ve indicated you need help with apprenticeship applications. Speak to the Careers Advisor or Mr Scobie.'
+                });
+            }
+
+            if (alerts.length === 0) {
+                alerts.push({
+                    type: 'success',
+                    icon: '✅',
+                    msg: 'Your choices look good! Click Submit when you\'re ready.'
+                });
+            }
+
+            alertsDiv.innerHTML = alerts.map(a => `
+                <div class="alert alert-${a.type}">
+                    <span class="icon">${a.icon}</span>
+                    <div class="content">${a.msg}</div>
+                </div>
+            `).join('');
+        }
+
+        // ============================================
+        // SUBMISSION
+        // ============================================
+        function submitForm() {
+            const status = getPathwayStatus();
+            const submission = {
+                v: 3,
+                ts: Date.now(),
+                type: 's6-choices',
+                scn: data.scn,
+                fn: data.forename,
+                sn: data.surname,
+                cl: data.regClass,
+                dt: data.destType,
+                dc: data.destCourse,
+                da: data.destArea,
+                ld: data.leavingDate,
+                ca: data.collegeApplied,
+                ak: data.apprenticeKnows,
+                dh: data.discussedHome,
+                cv: data.careersVisit,
+                wm: data.wantsMeeting,
+                rc: data.recs,
+                ch: data.choices,
+                pw: status.pathway || '',
+                co: data.constraints,
+                nt: data.notes
+            };
+
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(submission))));
+            document.getElementById('submissionCode').textContent = code;
+            currentStep = 8;
+            showStep();
+        }
+
+        function copyCodeSilent() {
+            const code = document.getElementById('submissionCode').textContent;
+            navigator.clipboard.writeText(code).catch(() => {});
+        }
+
+        function copyCode() {
+            const code = document.getElementById('submissionCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copied!';
+                btn.style.background = '#28a745';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#2d5a87';
+                }, 2000);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = code;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('Code copied!');
+            });
+        }
+
+        // ============================================
+        // ADMIN MODE
+        // ============================================
+        function processSubmissions() {
+            const input = document.getElementById('pasteArea').value.trim();
+            if (!input) return;
+
+            const codes = input.split(/[\n,]+/).map(c => c.trim()).filter(c => c.length > 10);
+            
+            let newCount = 0;
+            codes.forEach(code => {
+                try {
+                    const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
+                    if (decoded.fn) {
+                        const exists = loadedSubmissions.some(s => s.ts === decoded.ts && s.fn === decoded.fn);
+                        if (!exists) {
+                            decoded._status = evaluateSubmission(decoded);
+                            loadedSubmissions.push(decoded);
+                            newCount++;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Failed to decode:', code.substring(0, 30) + '...');
+                }
+            });
+
+            if (newCount > 0) {
+                document.getElementById('pasteArea').value = '';
+                document.getElementById('exportBtn').style.display = 'inline-block';
+            }
+            
+            renderSubmissions();
+        }
+
+        function clearSubmissions() {
+            loadedSubmissions = [];
+            document.getElementById('exportBtn').style.display = 'none';
+            renderSubmissions();
+        }
+
+        function evaluateSubmission(sub) {
+            // Early leaver - just flag for info
+            if (sub.type === 'early-leaver') {
+                return { status: 'amber', issues: [], warnings: [], followUps: ['S5 Leaver - confirm destination plans'] };
+            }
+
+            let issues = [];
+            let warnings = [];
+            let followUps = [];
+
+            if (sub.co && sub.co.includes('no-partnership')) {
+                const partnershipChoices = (sub.ch || []).filter(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s && s.p;
+                });
+                if (partnershipChoices.length > 0) {
+                    issues.push('Partnership courses selected but cannot attend');
+                }
+            }
+
+            if (sub.rc && sub.rc.length > 0 && sub.ch) {
+                const choiceNames = sub.ch.map(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s ? `${s.level} ${s.name}`.toLowerCase() : '';
+                });
+                
+                const unmatched = sub.rc.filter(r => {
+                    const rLower = r.toLowerCase();
+                    return !choiceNames.some(c => c.includes(rLower.replace(/^(ah|h|n5|l5|l6|l4)\s*/i, '').trim()));
+                });
+
+                if (unmatched.length > 0) {
+                    warnings.push(`Recs not in choices: ${unmatched.join(', ')}`);
+                }
+            }
+
+            if (sub.wm === 'Yes') {
+                followUps.push('Requested meeting with Mr Scobie');
+            }
+
+            if (sub.dt === 'College' && (sub.ca === 'No' || sub.ca === 'NotSure')) {
+                followUps.push('Needs help with college application');
+            }
+
+            if (sub.dt === 'Apprenticeship' && sub.ak === 'No') {
+                followUps.push('Needs apprenticeship guidance');
+            }
+
+            if (sub.cv === 'Never') {
+                followUps.push('Never met Careers Advisor');
+            }
+
+            if (sub.dh === 'No') {
+                followUps.push('Not discussed choices at home');
+            }
+
+            if (issues.length > 0) return { status: 'red', issues, warnings, followUps };
+            if (warnings.length > 0 || followUps.length > 0) return { status: 'amber', issues, warnings, followUps };
+            return { status: 'green', issues, warnings, followUps };
+        }
+
+        function renderSubmissions() {
+            document.getElementById('subCount').textContent = `(${loadedSubmissions.length})`;
+            
+            const container = document.getElementById('submissionsList');
+            if (loadedSubmissions.length === 0) {
+                container.innerHTML = '<div class="info-box"><p>No submissions loaded yet. Paste student codes above and click "Load Submissions".</p></div>';
+                return;
+            }
+
+            const sorted = [...loadedSubmissions].sort((a, b) => {
+                const order = { red: 0, amber: 1, green: 2 };
+                return order[a._status.status] - order[b._status.status];
+            });
+
+            container.innerHTML = sorted.map((sub, i) => {
+                const status = sub._status;
+                const date = new Date(sub.ts).toLocaleDateString();
+                const isEarlyLeaver = sub.type === 'early-leaver';
+                
+                return `
+                    <div class="submission-card ${status.status}">
+                        <div class="submission-header" onclick="toggleSubmission(${i})">
+                            <div class="info">
+                                <div class="name">${sub.fn} ${sub.sn} ${isEarlyLeaver ? '<span style="background:#ffc107;color:#856404;padding:2px 8px;border-radius:10px;font-size:0.7rem;margin-left:8px;">S5 LEAVER</span>' : ''}</div>
+                                <div class="meta">${sub.cl} • ${isEarlyLeaver ? 'Leaving End of S5' : sub.dt + (sub.dc ? ': ' + sub.dc : '') + ' • ' + (sub.pw || 'Unknown pathway')} • ${date}</div>
+                            </div>
+                            <span class="status status-${status.status}">
+                                ${status.status === 'green' ? '✓ Ready' : status.status === 'amber' ? '⚠ Review' : '❌ Issues'}
+                            </span>
+                        </div>
+                        <div class="submission-body" id="sub-body-${i}">
+                            ${status.issues.length > 0 ? `
+                                <div class="alert alert-error">
+                                    <span class="icon">❌</span>
+                                    <div class="content"><strong>Issues:</strong><br>${status.issues.join('<br>')}</div>
+                                </div>
+                            ` : ''}
+                            ${status.warnings.length > 0 ? `
+                                <div class="alert alert-warning">
+                                    <span class="icon">⚠️</span>
+                                    <div class="content"><strong>Warnings:</strong><br>${status.warnings.join('<br>')}</div>
+                                </div>
+                            ` : ''}
+                            
+                            ${isEarlyLeaver ? `
+                                <div class="submission-grid">
+                                    ${sub.scn ? `<div class="submission-item"><label>SCN</label><div class="value">${sub.scn}</div></div>` : ''}
+                                    <div class="submission-item"><label>Leaving</label><div class="value">End of S5</div></div>
+                                    <div class="submission-item"><label>Destination</label><div class="value">${sub.dt}</div></div>
+                                </div>
+                                <div class="info-box warning">
+                                    <h5>📋 Action Required</h5>
+                                    <p>This student is planning to leave at the end of S5. Follow up to confirm their plans and ensure they have support with applications.</p>
+                                </div>
+                            ` : `
+                                <div class="submission-grid">
+                                    ${sub.scn ? `<div class="submission-item"><label>SCN</label><div class="value">${sub.scn}</div></div>` : ''}
+                                    <div class="submission-item"><label>Destination</label><div class="value">${sub.dt}</div></div>
+                                    <div class="submission-item"><label>Course/Career</label><div class="value">${sub.dc || '-'}</div></div>
+                                    <div class="submission-item"><label>Area</label><div class="value">${sub.da}</div></div>
+                                    <div class="submission-item"><label>Leaving</label><div class="value">${sub.ld}</div></div>
+                                    <div class="submission-item"><label>Pathway</label><div class="value">${sub.pw || '-'}</div></div>
+                                    <div class="submission-item">
+                                        <label>Discussed at home</label>
+                                        <div class="value ${sub.dh === 'No' ? 'needs-action' : ''}">${sub.dh || '-'}</div>
+                                    </div>
+                                    <div class="submission-item">
+                                        <label>Careers Advisor</label>
+                                        <div class="value ${sub.cv === 'Never' ? 'needs-action' : ''}">${sub.cv || '-'}</div>
+                                    </div>
+                                    <div class="submission-item">
+                                        <label>Wants meeting</label>
+                                        <div class="value ${sub.wm === 'Yes' ? 'needs-action' : ''}">${sub.wm || '-'}</div>
+                                    </div>
+                                    ${sub.dt === 'College' ? `
+                                        <div class="submission-item">
+                                            <label>College applied</label>
+                                            <div class="value ${sub.ca !== 'Yes' ? 'needs-action' : 'good'}">${sub.ca || '-'}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${sub.dt === 'Apprenticeship' ? `
+                                        <div class="submission-item">
+                                            <label>Knows how to apply</label>
+                                            <div class="value ${sub.ak === 'No' ? 'needs-action' : 'good'}">${sub.ak || '-'}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+
+                                <h5 style="margin: 15px 0 10px; color: #1e3a5f;">Teacher Recommendations</h5>
+                                <div class="recs-container" style="background:white; border:1px solid #e9ecef;">
+                                    ${sub.rc && sub.rc.length > 0 
+                                        ? sub.rc.map(r => `<span class="rec-chip">${r}</span>`).join('') 
+                                        : '<em style="color:#999;">None provided</em>'}
+                                </div>
+
+                                <h5 style="margin: 15px 0 10px; color: #1e3a5f;">Subject Choices</h5>
+                                <table class="comparison-table">
+                                    <tr><th>#</th><th>Subject</th><th>Periods</th><th>In Recs?</th></tr>
+                                    ${(sub.ch || []).map((id, j) => {
+                                        const s = subjects.find(x => x.id === id);
+                                        if (!s) return '';
+                                        const fullName = `${s.level} ${s.name}`;
+                                        const inRecs = sub.rc && sub.rc.some(r => {
+                                            const rLower = r.toLowerCase();
+                                            return s.name.toLowerCase().includes(rLower.replace(/^(ah|h|n5|l5|l6|l4)\s*/i, '').trim());
+                                        });
+                                        return `
+                                            <tr>
+                                                <td>${j + 1}</td>
+                                                <td>${fullName}${s.p ? ' <em style="color:#856404;">(P)</em>' : ''}</td>
+                                                <td>${s.periods}</td>
+                                                <td class="${inRecs ? 'match-yes' : 'match-no'}">${inRecs ? '✓' : '—'}</td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </table>
+                            `}
+
+                            ${status.followUps.length > 0 ? `
+                                <div class="follow-up-section">
+                                    <h5>📋 Follow-up Actions</h5>
+                                    <ul>
+                                        ${status.followUps.map(f => `<li>${f}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            ` : ''}
+
+                            ${sub.nt ? `
+                                <h5 style="margin: 15px 0 10px; color: #1e3a5f;">Student Notes</h5>
+                                <p style="background:#f8f9fa; padding:12px; border-radius:8px;">${sub.nt}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSubmission(i) {
+            const body = document.getElementById(`sub-body-${i}`);
+            body.classList.toggle('expanded');
+        }
+
+        function exportCSV() {
+            if (loadedSubmissions.length === 0) return;
+
+            const headers = ['Name', 'Class', 'SCN', 'Type', 'Destination', 'Course/Career', 'Area', 'Pathway', 'Leaving', 'Discussed Home', 'Careers Advisor', 'Wants Meeting', 'College Applied', 'Apprentice Knows', 'Recommendations', 'Choice 1', 'Choice 2', 'Choice 3', 'Choice 4', 'Choice 5', 'Choice 6', 'Constraints', 'Notes', 'Status', 'Follow-ups'];
+            
+            const rows = loadedSubmissions.map(sub => {
+                const choices = (sub.ch || []).map(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s ? `${s.level} ${s.name}` : id;
+                });
+                
+                return [
+                    `${sub.fn} ${sub.sn}`,
+                    sub.cl,
+                    sub.scn || '',
+                    sub.type || 's6-choices',
+                    sub.dt,
+                    sub.dc || '',
+                    sub.da || '',
+                    sub.pw || '',
+                    sub.ld,
+                    sub.dh || '',
+                    sub.cv || '',
+                    sub.wm || '',
+                    sub.ca || '',
+                    sub.ak || '',
+                    (sub.rc || []).join('; '),
+                    choices[0] || '',
+                    choices[1] || '',
+                    choices[2] || '',
+                    choices[3] || '',
+                    choices[4] || '',
+                    choices[5] || '',
+                    (sub.co || []).join('; '),
+                    sub.nt || '',
+                    sub._status.status.toUpperCase(),
+                    sub._status.followUps.join('; ')
+                ];
+            });
+
+            const csv = [headers, ...rows].map(row => 
+                row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `S6_Submissions_${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
