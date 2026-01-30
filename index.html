@@ -224,6 +224,26 @@
         }
         .subject-btn.selected .partnership-tag { background: rgba(255,255,255,0.3); color: white; }
 
+        /* Reserve Selection Styles */
+        .subject-btn.reserve-selected { 
+            background: #fff3cd; 
+            border-color: #ffc107; 
+            color: #856404; 
+        }
+        .subject-btn.reserve-selected .check { 
+            background: #856404; 
+            border-color: #856404; 
+            color: white; 
+        }
+        .subject-btn.reserve-selected .periods-tag { 
+            background: rgba(133, 100, 4, 0.2); 
+            color: #856404; 
+        }
+        .subject-btn.reserve-selected .partnership-tag {
+            background: rgba(133, 100, 4, 0.3);
+            color: #856404;
+        }
+
         /* Pathway Help */
         .pathway-help { margin-top: 20px; background: #f8f9fa; border-radius: 10px; }
         .pathway-help summary {
@@ -383,6 +403,12 @@
         .follow-up-section h5 { color: #856404; margin-bottom: 10px; }
         .follow-up-section ul { margin-left: 20px; color: #856404; }
         .hidden { display: none !important; }
+
+        /* Reserve mode indicator */
+        .reserve-mode-active {
+            background: #ffc107 !important;
+            color: #856404 !important;
+        }
         
         @media (max-width: 600px) {
             body { padding: 10px; }
@@ -840,6 +866,27 @@
                         </div>
                     </div>
 
+                    <!-- Reserve Choices Panel -->
+                    <div class="choices-panel" style="background: #fff3cd; border-color: #ffc107;">
+                        <h4 style="color: #856404;">
+                            Reserve Choices (in preference order)
+                            <span style="font-weight: normal; font-size: 0.85rem;">- in case your first choices aren't available</span>
+                        </h4>
+                        <div class="choices-list" id="reserveChoicesList">
+                            <div class="empty-choices">Select reserve subjects from the list below</div>
+                        </div>
+                    </div>
+
+                    <div class="info-box" style="margin-bottom: 20px;">
+                        <h5>💡 How to add reserves</h5>
+                        <p>First complete your main choices, then click the button below to switch to reserve selection mode and add up to 2 reserve subjects.</p>
+                        <div style="margin-top: 10px;">
+                            <button class="btn btn-back" id="reserveModeBtn" onclick="toggleReserveMode()" style="font-size: 0.85rem; padding: 8px 16px;">
+                                🔄 Switch to Reserve Selection Mode
+                            </button>
+                        </div>
+                    </div>
+
                     <details class="pathway-help">
                         <summary>View valid pathway combinations</summary>
                         <div class="pathway-help-content">
@@ -1011,6 +1058,11 @@
                     <div class="summary-block">
                         <h4>📚 Your Subject Choices <span id="sumPathway" style="font-weight:normal; font-size:0.9rem; color:#666;"></span></h4>
                         <ol class="summary-list" id="sumChoices"></ol>
+                    </div>
+
+                    <div class="summary-block" id="sumReservesBlock" style="display:none;">
+                        <h4>🔄 Reserve Choices</h4>
+                        <ol class="summary-list" id="sumReserves"></ol>
                     </div>
 
                     <div class="summary-block" id="sumConstraintsBlock" style="display:none;">
@@ -1296,6 +1348,7 @@
         let currentStep = 1;
         const totalSteps = 8;
         let isEarlyLeaver = false;
+        let reserveMode = false;
         let data = {
             scn: '',
             forename: '',
@@ -1312,6 +1365,7 @@
             wantsMeeting: '',
             recs: [],
             choices: [],
+            reserves: [],
             constraints: [],
             notes: ''
         };
@@ -1521,11 +1575,12 @@
         function startOver() {
             currentStep = 1;
             isEarlyLeaver = false;
+            reserveMode = false;
             data = {
                 scn: '', forename: '', surname: '', regClass: '', destType: '', destCourse: '', destArea: '',
                 leavingDate: '', collegeApplied: '', apprenticeKnows: '',
                 discussedHome: '', careersVisit: '', wantsMeeting: '',
-                recs: [], choices: [], constraints: [], notes: ''
+                recs: [], choices: [], reserves: [], constraints: [], notes: ''
             };
             
             document.getElementById('scn').value = '';
@@ -1552,6 +1607,12 @@
             document.getElementById('earlyLeaverSection').style.display = 'none';
             document.getElementById('s6PlanSection').style.display = 'block';
             document.getElementById('progressBar').style.display = 'flex';
+            
+            // Reset reserve mode button
+            const btn = document.getElementById('reserveModeBtn');
+            btn.textContent = '🔄 Switch to Reserve Selection Mode';
+            btn.style.background = '#e9ecef';
+            btn.style.color = '#333';
             
             renderRecs();
             updateChoicesDisplay();
@@ -1715,6 +1776,55 @@
         }
 
         // ============================================
+        // RESERVE CHOICES
+        // ============================================
+        function toggleReserveMode() {
+            reserveMode = !reserveMode;
+            const btn = document.getElementById('reserveModeBtn');
+            if (reserveMode) {
+                btn.textContent = '✓ Reserve Mode ON - Click subjects to add as reserves';
+                btn.style.background = '#ffc107';
+                btn.style.color = '#856404';
+            } else {
+                btn.textContent = '🔄 Switch to Reserve Selection Mode';
+                btn.style.background = '#e9ecef';
+                btn.style.color = '#333';
+            }
+            updateChoicesDisplay();
+        }
+
+        function removeReserve(id) {
+            data.reserves = data.reserves.filter(r => r !== id);
+            updateChoicesDisplay();
+        }
+
+        function updateReservesDisplay() {
+            const list = document.getElementById('reserveChoicesList');
+            if (data.reserves.length === 0) {
+                list.innerHTML = '<div class="empty-choices">Select reserve subjects from the list below</div>';
+                return;
+            }
+
+            list.innerHTML = data.reserves.map((id, i) => {
+                const s = subjects.find(x => x.id === id);
+                if (!s) return '';
+                let badgeClass = 'small';
+                if (s.level === 'AH') badgeClass = 'ah';
+                else if (s.periods === 6) badgeClass = 'large';
+                
+                return `
+                    <div class="choice-item" style="border-color: #ffc107;">
+                        <span class="order" style="background: #856404;">R${i + 1}</span>
+                        <span class="name">${s.level} ${s.name}</span>
+                        <span class="level-badge ${badgeClass}">${s.periods}p</span>
+                        ${s.p ? '<span class="partnership-tag" style="font-size:0.7rem;">Partnership</span>' : ''}
+                        <button class="remove" onclick="removeReserve('${id}')">×</button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
         // SUBJECTS
         // ============================================
         function renderSubjectAreas() {
@@ -1753,15 +1863,41 @@
         }
 
         function toggleSubject(id) {
-            const idx = data.choices.indexOf(id);
-            if (idx > -1) {
-                data.choices.splice(idx, 1);
-            } else {
-                if (!canAddSubject(id)) {
-                    alert('Adding this subject would not lead to a valid pathway combination.');
+            // Check if already in main choices
+            const inChoices = data.choices.indexOf(id);
+            // Check if already in reserves
+            const inReserves = data.reserves.indexOf(id);
+
+            if (reserveMode) {
+                // RESERVE MODE
+                if (inChoices > -1) {
+                    alert('This subject is already in your main choices. Remove it from there first if you want it as a reserve.');
                     return;
                 }
-                data.choices.push(id);
+                if (inReserves > -1) {
+                    data.reserves.splice(inReserves, 1);
+                } else {
+                    if (data.reserves.length >= 2) {
+                        alert('You can only select 2 reserve choices. Remove one first.');
+                        return;
+                    }
+                    data.reserves.push(id);
+                }
+            } else {
+                // NORMAL MODE
+                if (inReserves > -1) {
+                    alert('This subject is already in your reserves. Remove it from there first.');
+                    return;
+                }
+                if (inChoices > -1) {
+                    data.choices.splice(inChoices, 1);
+                } else {
+                    if (!canAddSubject(id)) {
+                        alert('Adding this subject would not lead to a valid pathway combination.');
+                        return;
+                    }
+                    data.choices.push(id);
+                }
             }
             updateChoicesDisplay();
         }
@@ -1816,37 +1952,43 @@
             document.querySelectorAll('.subject-btn').forEach(btn => {
                 const id = btn.dataset.id;
                 const isSelected = data.choices.includes(id);
-                btn.classList.toggle('selected', isSelected);
+                const isReserve = data.reserves.includes(id);
                 
-                if (!isSelected) {
+                btn.classList.remove('selected', 'reserve-selected', 'disabled');
+                
+                if (isSelected) {
+                    btn.classList.add('selected');
+                } else if (isReserve) {
+                    btn.classList.add('reserve-selected');
+                } else if (!reserveMode) {
                     btn.classList.toggle('disabled', !canAddSubject(id));
-                } else {
-                    btn.classList.remove('disabled');
                 }
             });
 
             const list = document.getElementById('choicesList');
             if (data.choices.length === 0) {
                 list.innerHTML = '<div class="empty-choices">Click subjects below to add them</div>';
-                return;
+            } else {
+                list.innerHTML = data.choices.map((id, i) => {
+                    const s = subjects.find(x => x.id === id);
+                    let badgeClass = 'small';
+                    if (s.level === 'AH') badgeClass = 'ah';
+                    else if (s.periods === 6) badgeClass = 'large';
+                    
+                    return `
+                        <div class="choice-item">
+                            <span class="order">${i + 1}</span>
+                            <span class="name">${s.level} ${s.name}</span>
+                            <span class="level-badge ${badgeClass}">${s.periods}p</span>
+                            ${s.p ? '<span class="partnership-tag" style="font-size:0.7rem;">Partnership</span>' : ''}
+                            <button class="remove" onclick="removeChoice('${id}')">×</button>
+                        </div>
+                    `;
+                }).join('');
             }
 
-            list.innerHTML = data.choices.map((id, i) => {
-                const s = subjects.find(x => x.id === id);
-                let badgeClass = 'small';
-                if (s.level === 'AH') badgeClass = 'ah';
-                else if (s.periods === 6) badgeClass = 'large';
-                
-                return `
-                    <div class="choice-item">
-                        <span class="order">${i + 1}</span>
-                        <span class="name">${s.level} ${s.name}</span>
-                        <span class="level-badge ${badgeClass}">${s.periods}p</span>
-                        ${s.p ? '<span class="partnership-tag" style="font-size:0.7rem;">Partnership</span>' : ''}
-                        <button class="remove" onclick="removeChoice('${id}')">×</button>
-                    </div>
-                `;
-            }).join('');
+            // Update reserves display
+            updateReservesDisplay();
         }
 
         // ============================================
@@ -1892,6 +2034,18 @@
                 return `<li><span class="num">${i + 1}</span><span>${s.level} ${s.name}${s.p ? ' <em style="color:#856404;">(Partnership)</em>' : ''}</span></li>`;
             }).join('');
 
+            // Add reserves to summary
+            const sumReservesBlock = document.getElementById('sumReservesBlock');
+            if (data.reserves.length > 0) {
+                sumReservesBlock.style.display = 'block';
+                document.getElementById('sumReserves').innerHTML = data.reserves.map((id, i) => {
+                    const s = subjects.find(x => x.id === id);
+                    return `<li><span class="num" style="background:#856404;">R${i + 1}</span><span>${s.level} ${s.name}${s.p ? ' <em style="color:#856404;">(Partnership)</em>' : ''}</span></li>`;
+                }).join('');
+            } else {
+                sumReservesBlock.style.display = 'none';
+            }
+
             const constraintsBlock = document.getElementById('sumConstraintsBlock');
             if (data.constraints.length > 0) {
                 constraintsBlock.style.display = 'block';
@@ -1930,6 +2084,23 @@
                         type: 'error',
                         icon: '❌',
                         msg: `You've selected partnership courses but indicated you cannot attend them: <strong>${names}</strong>. Please remove these or change your constraint.`
+                    });
+                }
+                
+                // Also check reserves for partnership conflict
+                const partnershipReserves = data.reserves.filter(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s && s.p;
+                });
+                if (partnershipReserves.length > 0) {
+                    const names = partnershipReserves.map(id => {
+                        const s = subjects.find(x => x.id === id);
+                        return `${s.level} ${s.name}`;
+                    }).join(', ');
+                    alerts.push({
+                        type: 'warning',
+                        icon: '⚠️',
+                        msg: `You've selected partnership courses as reserves but indicated you cannot attend them: <strong>${names}</strong>.`
                     });
                 }
             }
@@ -2018,6 +2189,7 @@
                 wm: data.wantsMeeting,
                 rc: data.recs,
                 ch: data.choices,
+                rs: data.reserves,
                 pw: status.pathway || '',
                 co: data.constraints,
                 nt: data.notes
@@ -2176,6 +2348,12 @@
                 const date = new Date(sub.ts).toLocaleDateString();
                 const isEarlyLeaver = sub.type === 'early-leaver';
                 
+                // Get reserve names for display
+                const reserveNames = (sub.rs || []).map(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s ? `${s.level} ${s.name}` : id;
+                });
+                
                 return `
                     <div class="submission-card ${status.status}">
                         <div class="submission-header" onclick="toggleSubmission(${i})">
@@ -2273,6 +2451,13 @@
                                         `;
                                     }).join('')}
                                 </table>
+                                
+                                ${reserveNames.length > 0 ? `
+                                    <h5 style="margin: 15px 0 10px; color: #856404;">🔄 Reserve Choices</h5>
+                                    <div style="background:#fff3cd; border:1px solid #ffc107; border-radius:8px; padding:12px;">
+                                        ${reserveNames.map((name, j) => `<span style="display:inline-block; background:#856404; color:white; padding:4px 12px; border-radius:15px; margin:2px; font-size:0.85rem;">R${j+1}: ${name}</span>`).join('')}
+                                    </div>
+                                ` : ''}
                             `}
 
                             ${status.followUps.length > 0 ? `
@@ -2302,10 +2487,15 @@
         function exportCSV() {
             if (loadedSubmissions.length === 0) return;
 
-            const headers = ['Name', 'Class', 'SCN', 'Type', 'Destination', 'Course/Career', 'Area', 'Pathway', 'Leaving', 'Discussed Home', 'Careers Advisor', 'Wants Meeting', 'College Applied', 'Apprentice Knows', 'Recommendations', 'Choice 1', 'Choice 2', 'Choice 3', 'Choice 4', 'Choice 5', 'Choice 6', 'Constraints', 'Notes', 'Status', 'Follow-ups'];
+            const headers = ['Name', 'Class', 'SCN', 'Type', 'Destination', 'Course/Career', 'Area', 'Pathway', 'Leaving', 'Discussed Home', 'Careers Advisor', 'Wants Meeting', 'College Applied', 'Apprentice Knows', 'Recommendations', 'Choice 1', 'Choice 2', 'Choice 3', 'Choice 4', 'Choice 5', 'Choice 6', 'Reserve 1', 'Reserve 2', 'Constraints', 'Notes', 'Status', 'Follow-ups'];
             
             const rows = loadedSubmissions.map(sub => {
                 const choices = (sub.ch || []).map(id => {
+                    const s = subjects.find(x => x.id === id);
+                    return s ? `${s.level} ${s.name}` : id;
+                });
+                
+                const reserves = (sub.rs || []).map(id => {
                     const s = subjects.find(x => x.id === id);
                     return s ? `${s.level} ${s.name}` : id;
                 });
@@ -2332,6 +2522,8 @@
                     choices[3] || '',
                     choices[4] || '',
                     choices[5] || '',
+                    reserves[0] || '',
+                    reserves[1] || '',
                     (sub.co || []).join('; '),
                     sub.nt || '',
                     sub._status.status.toUpperCase(),
